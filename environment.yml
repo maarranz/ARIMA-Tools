@@ -1,0 +1,16 @@
+name: atse_arma_tools
+
+dependencies:
+  - python=3.14
+  - pip
+  - pip:
+      - numpy
+      - pandas
+      - scipy
+      - matplotlib
+      - plotly
+      - statsmodels
+      - statsforecast
+      - jupyterlab
+      - notebook
+      - ipykernel
