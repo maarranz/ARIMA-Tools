@@ -17,6 +17,7 @@ Miguel A. Arranz
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from scipy.stats import chi2
 
 
 __version__ = "0.1.0"
@@ -28,6 +29,9 @@ __all__ = [
     "common_roots",
     "plot_inverse_roots",
     "root_summary",
+    "coefficient_diagnostics",
+    "parameter_correlation",
+    "joint_significance",
 ]
 
 def root_diagnostics(results):
@@ -467,5 +471,162 @@ def root_summary(results, tol=0.05, exact_tol=1e-10):
         name="Root diagnostics",
     )
 
+def coefficient_diagnostics(results, confidence=0.95):
+    """
+    Return coefficient diagnostics for a fitted ARIMA model.
+
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted ARIMA model results.
+    confidence : float, default 0.95
+        Confidence level used to construct the confidence intervals.
+        Must lie strictly between 0 and 1.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table containing coefficient estimates, standard errors,
+        z-statistics, asymptotic p-values, and confidence intervals.
+
+    Notes
+    -----
+    The reported z-statistics and p-values use the asymptotic normal
+    approximation employed by statsmodels for ARIMA maximum-likelihood
+    estimates.
+
+    No automatic significance classification is provided. In dynamic
+    models, coefficient relevance should not be assessed mechanically
+    using a fixed p-value threshold.
+    """
+
+    if not 0 < confidence < 1:
+        raise ValueError("confidence must lie strictly between 0 and 1.")
+
+    alpha = 1 - confidence
+    conf_int = np.asarray(results.conf_int(alpha=alpha))
+
+    ci_percent = 100 * confidence
+
+    return pd.DataFrame(
+        {
+            "Coefficient": results.param_names,
+            "Estimate": np.asarray(results.params),
+            "Std. Error": np.asarray(results.bse),
+            "z-statistic": np.asarray(results.tvalues),
+            "P-value": np.asarray(results.pvalues),
+            f"{ci_percent:g}% CI Lower": conf_int[:, 0],
+            f"{ci_percent:g}% CI Upper": conf_int[:, 1],
+        }
+    )
+
+def parameter_correlation(results, include_variance=False):
+    """
+    Return the estimated correlation matrix of model parameters.
+
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted ARIMA model results.
+    include_variance : bool, default False
+        If True, include the innovation variance parameter (sigma2)
+        in the correlation matrix.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Estimated parameter correlation matrix.
+
+    Notes
+    -----
+    Large correlations between parameter estimates may indicate that
+    individual coefficients are imprecisely identified or that the
+    model is overparameterized.
+
+    Parameter correlation should be interpreted together with other
+    model diagnostics and should not be used mechanically as a model
+    selection rule.
+    """
+
+    cov = np.asarray(results.cov_params())
+    names = np.asarray(results.param_names)
+
+    # Optionally remove sigma2
+    if not include_variance:
+        keep = names != "sigma2"
+        cov = cov[np.ix_(keep, keep)]
+        names = names[keep]
+
+    std = np.sqrt(np.diag(cov))
+
+    corr = cov / np.outer(std, std)
+
+    return pd.DataFrame(
+        corr,
+        index=names,
+        columns=names,
+    )
+
+def joint_significance(results, parameters):
+    """
+    Test whether a group of model parameters is jointly equal to zero.
+
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted ARIMA model results.
+    parameters : sequence of str
+        Names of the parameters to be tested jointly.
+
+    Returns
+    -------
+    pandas.Series
+        Wald chi-squared statistic, degrees of freedom, and
+        asymptotic p-value.
+
+    Notes
+    -----
+    The null hypothesis is that all selected parameters are jointly
+    equal to zero.
+
+    The test is a Wald test based on the estimated covariance matrix
+    of the fitted ARIMA model. Under the null hypothesis, the Wald
+    statistic has an asymptotic chi-squared distribution with degrees
+    of freedom equal to the number of restrictions.
+    """
+
+    parameters = list(parameters)
+    names = list(results.param_names)
+
+    if len(parameters) == 0:
+        raise ValueError("At least one parameter must be specified.")
+
+    unknown = [p for p in parameters if p not in names]
+
+    if unknown:
+        raise ValueError(
+            "Unknown parameter(s): " + ", ".join(unknown)
+        )
+
+    if len(set(parameters)) != len(parameters):
+        raise ValueError("Parameter names must not be repeated.")
+
+    indices = [names.index(p) for p in parameters]
+
+    beta = np.asarray(results.params)[indices]
+    cov = np.asarray(results.cov_params())[np.ix_(indices, indices)]
+
+    statistic = float(beta @ np.linalg.solve(cov, beta))
+    df = len(parameters)
 
 
+    p_value = float(chi2.sf(statistic, df))
+
+    return pd.Series(
+        {
+            "Wald statistic": statistic,
+            "Degrees of freedom": df,
+            "P-value": p_value,
+        },
+        name="Joint significance test",
+    )
