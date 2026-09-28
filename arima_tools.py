@@ -17,10 +17,12 @@ Miguel A. Arranz
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from scipy.stats import chi2
+from statsmodels.stats.diagnostic import acorr_ljungbox
+from statsmodels.tsa.stattools import acf, pacf
+from plotly.subplots import make_subplots
+from scipy.stats import chi2, norm, jarque_bera, skew, kurtosis
 
-
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "root_diagnostics",
@@ -32,6 +34,10 @@ __all__ = [
     "coefficient_diagnostics",
     "parameter_correlation",
     "joint_significance",
+    "ljung_box_test",
+    "residual_correlation",
+    "plot_residual_diagnostics",
+    "jarque_bera_test",
 ]
 
 def root_diagnostics(results):
@@ -629,4 +635,613 @@ def joint_significance(results, parameters):
             "P-value": p_value,
         },
         name="Joint significance test",
+    )
+
+def ljung_box_test(results, lags):
+    """
+    Perform Ljung-Box tests for residual autocorrelation.
+
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted ARIMA model results.
+    lags : int or sequence of int
+        Lag or lags at which the Ljung-Box test is performed.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table containing the Ljung-Box statistic, degrees of freedom,
+        and p-value for each requested lag.
+
+    Notes
+    -----
+    The null hypothesis is that the residual autocorrelations up to
+    the specified lag are jointly equal to zero.
+
+    The degrees of freedom are adjusted for the number of estimated
+    AR and MA parameters:
+
+        df = h - p - q
+
+    where h is the Ljung-Box lag.
+
+    Tests with nonpositive degrees of freedom are not defined and
+    therefore cannot be computed.
+    """
+
+    if np.isscalar(lags):
+        lags = [int(lags)]
+    else:
+        lags = [int(lag) for lag in lags]
+
+    if any(lag <= 0 for lag in lags):
+        raise ValueError("All lags must be positive integers.")
+
+    p = results.model.order[0]
+    q = results.model.order[2]
+    model_df = p + q
+
+    invalid_lags = [lag for lag in lags if lag <= model_df]
+
+    if invalid_lags:
+        raise ValueError(
+            f"Ljung-Box lags must be greater than p + q = {model_df}. "
+            f"Invalid lag(s): {invalid_lags}"
+        )
+
+    lb = acorr_ljungbox(
+        results.resid,
+        lags=lags,
+        model_df=model_df,
+        return_df=True,
+    )
+
+    table = lb.rename(
+        columns={
+            "lb_stat": "Ljung-Box statistic",
+            "lb_pvalue": "P-value",
+        }
+    )
+
+    table.index.name = "Lag"
+    table["Degrees of freedom"] = table.index - model_df
+
+    return table[
+        [
+            "Ljung-Box statistic",
+            "Degrees of freedom",
+            "P-value",
+        ]
+    ]
+
+def residual_correlations(results, lags=20, confidence=0.95):
+    """
+    Return residual autocorrelations and partial autocorrelations.
+
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted ARIMA model results.
+    lags : int, default 20
+        Maximum lag for the residual ACF and PACF.
+    confidence : float, default 0.95
+        Confidence level used to construct approximate white-noise
+        bounds for the residual correlations.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table containing residual ACF and PACF values from lag 1
+        through the requested maximum lag, together with approximate
+        confidence bounds.
+
+    Notes
+    -----
+    Lag zero is omitted because its ACF and PACF are equal to one
+    by construction and are not informative for residual diagnostics.
+
+    The confidence bounds are the approximate white-noise bounds
+
+        +/- z / sqrt(T),
+
+    where z is the appropriate standard Normal quantile and T is the
+    number of residual observations used in the calculation.
+
+    These are individual approximate bounds for inspecting the
+    correlogram. They are not a joint test of residual autocorrelation.
+    The Ljung-Box test should be used for joint testing.
+    """
+
+    if not isinstance(lags, (int, np.integer)) or lags <= 0:
+        raise ValueError("lags must be a positive integer.")
+
+    if not 0 < confidence < 1:
+        raise ValueError("confidence must lie strictly between 0 and 1.")
+
+    residuals = np.asarray(results.resid)
+    residuals = residuals[np.isfinite(residuals)]
+
+    nobs = len(residuals)
+
+    if lags >= nobs:
+        raise ValueError(
+            f"lags must be smaller than the number of residual "
+            f"observations ({nobs})."
+        )
+
+    acf_values = acf(
+        residuals,
+        nlags=lags,
+        fft=True,
+    )
+
+    pacf_values = pacf(
+        residuals,
+        nlags=lags,
+        method="ywm",
+    )
+
+    alpha = 1 - confidence
+    z = norm.ppf(1 - alpha / 2)
+    bound = z / np.sqrt(nobs)
+
+    return pd.DataFrame(
+        {
+            "Lag": np.arange(1, lags + 1),
+            "ACF": acf_values[1:],
+            "PACF": pacf_values[1:],
+            "Lower Bound": -bound,
+            "Upper Bound": bound,
+        }
+    )
+
+def plot_residual_diagnostics(
+    results,
+    lags=20,
+    confidence=0.95,
+    width=1000,
+    height=1200,
+    title="Residual Diagnostics",
+):
+    """
+    Plot residual diagnostics for a fitted ARIMA model.
+
+    The figure contains four vertically stacked panels:
+
+    1. Residuals over time
+    2. Residual autocorrelation function (ACF)
+    3. Residual partial autocorrelation function (PACF)
+    4. Ljung-Box test p-values by lag
+
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted ARIMA model results.
+    lags : int, default 20
+        Maximum lag displayed in the ACF, PACF, and Ljung-Box panels.
+    confidence : float, default 0.95
+        Confidence level used for the approximate white-noise bounds
+        in the ACF and PACF panels.
+    width : int, default 1000
+        Figure width in pixels.
+    height : int, default 1200
+        Figure height in pixels.
+    title : str, default "Residual Diagnostics"
+        Figure title.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        Interactive Plotly figure.
+
+    Notes
+    -----
+    Lag zero is omitted from the ACF and PACF panels because it is
+    equal to one by construction and can obscure the structure of
+    the remaining correlations.
+
+    The shaded regions in the ACF and PACF panels are approximate
+    individual white-noise bounds. They are not joint tests of
+    residual autocorrelation.
+
+    The Ljung-Box panel reports p-values only for lags for which the
+    adjusted degrees of freedom are positive. A horizontal reference
+    line is shown at p = 0.05.
+    """
+
+    # ------------------------------------------------------------
+    # Numerical diagnostics
+    # ------------------------------------------------------------
+
+    correlations = residual_correlations(
+        results,
+        lags=lags,
+        confidence=confidence,
+    )
+
+    residuals = pd.Series(results.resid).dropna()
+
+    lag_values = correlations["Lag"].to_numpy()
+    acf_values = correlations["ACF"].to_numpy()
+    pacf_values = correlations["PACF"].to_numpy()
+
+    lower = correlations["Lower Bound"].iloc[0]
+    upper = correlations["Upper Bound"].iloc[0]
+
+    # Ljung-Box tests are defined only when h > p + q.
+    p = results.model.order[0]
+    q = results.model.order[2]
+    first_lb_lag = p + q + 1
+
+    if first_lb_lag <= lags:
+        lb_lags = list(range(first_lb_lag, lags + 1))
+        lb_table = ljung_box_test(results, lb_lags)
+
+        lb_lag_values = lb_table.index.to_numpy()
+        lb_pvalues = lb_table["P-value"].to_numpy()
+    else:
+        lb_lag_values = np.array([])
+        lb_pvalues = np.array([])
+
+    # ------------------------------------------------------------
+    # Figure
+    # ------------------------------------------------------------
+
+    fig = make_subplots(
+        rows=4,
+        cols=1,
+        shared_xaxes=False,
+        vertical_spacing=0.06,
+        row_heights=[0.30, 0.24, 0.24, 0.22],
+        subplot_titles=[
+            "Residuals",
+            "Autocorrelation Function",
+            "Partial Autocorrelation Function",
+            "Ljung-Box Test",
+        ],
+    )
+
+    # ============================================================
+    # Panel 1: Residuals
+    # ============================================================
+
+    fig.add_trace(
+        go.Scatter(
+            x=residuals.index,
+            y=residuals.to_numpy(),
+            mode="lines",
+            line=dict(width=1.5),
+            hovertemplate=(
+                "<b>Observation:</b> %{x}<br>"
+                "<b>Residual:</b> %{y:.4f}"
+                "<extra></extra>"
+            ),
+            showlegend=False,
+        ),
+        row=1,
+        col=1,
+    )
+
+    fig.add_hline(
+        y=0,
+        line_width=1,
+        row=1,
+        col=1,
+    )
+
+    # ============================================================
+    # Panel 2: ACF
+    # ============================================================
+
+    # Confidence region
+    fig.add_hrect(
+        y0=lower,
+        y1=upper,
+        line_width=0,
+        opacity=0.12,
+        row=2,
+        col=1,
+    )
+
+    # Stems
+    for lag, value in zip(lag_values, acf_values):
+        fig.add_shape(
+            type="line",
+            x0=lag,
+            x1=lag,
+            y0=0,
+            y1=value,
+            line=dict(width=2),
+            row=2,
+            col=1,
+        )
+
+    # Markers
+    fig.add_trace(
+        go.Scatter(
+            x=lag_values,
+            y=acf_values,
+            mode="markers",
+            marker=dict(
+                size=8,
+                symbol="circle",
+            ),
+            hovertemplate=(
+                "<b>Lag:</b> %{x}<br>"
+                "<b>ACF:</b> %{y:.4f}"
+                "<extra></extra>"
+            ),
+            showlegend=False,
+        ),
+        row=2,
+        col=1,
+    )
+
+    fig.add_hline(
+        y=0,
+        line_width=1,
+        row=2,
+        col=1,
+    )
+
+    # ============================================================
+    # Panel 3: PACF
+    # ============================================================
+
+    # Confidence region
+    fig.add_hrect(
+        y0=lower,
+        y1=upper,
+        line_width=0,
+        opacity=0.12,
+        row=3,
+        col=1,
+    )
+
+    # Stems
+    for lag, value in zip(lag_values, pacf_values):
+        fig.add_shape(
+            type="line",
+            x0=lag,
+            x1=lag,
+            y0=0,
+            y1=value,
+            line=dict(width=2),
+            row=3,
+            col=1,
+        )
+
+    # Markers
+    fig.add_trace(
+        go.Scatter(
+            x=lag_values,
+            y=pacf_values,
+            mode="markers",
+            marker=dict(
+                size=8,
+                symbol="circle",
+            ),
+            hovertemplate=(
+                "<b>Lag:</b> %{x}<br>"
+                "<b>PACF:</b> %{y:.4f}"
+                "<extra></extra>"
+            ),
+            showlegend=False,
+        ),
+        row=3,
+        col=1,
+    )
+
+    fig.add_hline(
+        y=0,
+        line_width=1,
+        row=3,
+        col=1,
+    )
+
+    # ============================================================
+    # Panel 4: Ljung-Box p-values
+    # ============================================================
+
+    if lb_pvalues.size > 0:
+        fig.add_trace(
+            go.Scatter(
+                x=lb_lag_values,
+                y=lb_pvalues,
+                mode="lines+markers",
+                line=dict(width=2),
+                marker=dict(size=7),
+                hovertemplate=(
+                    "<b>Lag:</b> %{x}<br>"
+                    "<b>p-value:</b> %{y:.4f}"
+                    "<extra></extra>"
+                ),
+                showlegend=False,
+            ),
+            row=4,
+            col=1,
+        )
+
+    # 5% reference line
+    fig.add_hline(
+        y=0.05,
+        line_dash="dash",
+        line_width=1.5,
+        annotation_text="0.05",
+        annotation_position="top right",
+        row=4,
+        col=1,
+    )
+
+    # ============================================================
+    # Axes
+    # ============================================================
+
+    fig.update_xaxes(
+        title_text="Observation",
+        showline=True,
+        linewidth=1,
+        row=1,
+        col=1,
+    )
+
+    fig.update_yaxes(
+        title_text="Residual",
+        showline=True,
+        linewidth=1,
+        zeroline=False,
+        row=1,
+        col=1,
+    )
+
+    # ACF and PACF axes
+    for row in (2, 3):
+        fig.update_xaxes(
+            title_text="Lag",
+            dtick=1,
+            range=[0.5, lags + 0.5],
+            showline=True,
+            linewidth=1,
+            row=row,
+            col=1,
+        )
+
+        fig.update_yaxes(
+            title_text="Correlation",
+            showline=True,
+            linewidth=1,
+            zeroline=False,
+            row=row,
+            col=1,
+        )
+
+    # Separate adaptive symmetric scales for ACF and PACF.
+    for row, values in (
+        (2, acf_values),
+        (3, pacf_values),
+    ):
+        ymax = max(
+            np.max(np.abs(values)),
+            abs(lower),
+            abs(upper),
+        )
+
+        ymax = min(
+            1.0,
+            max(0.25, 1.15 * ymax),
+        )
+
+        fig.update_yaxes(
+            range=[-ymax, ymax],
+            row=row,
+            col=1,
+        )
+
+    # Ljung-Box axes
+    fig.update_xaxes(
+        title_text="Lag",
+        dtick=1,
+        range=[0.5, lags + 0.5],
+        showline=True,
+        linewidth=1,
+        row=4,
+        col=1,
+    )
+
+    fig.update_yaxes(
+        title_text="p-value",
+        range=[0, 1],
+        showline=True,
+        linewidth=1,
+        zeroline=False,
+        row=4,
+        col=1,
+    )
+
+    # ============================================================
+    # Overall layout
+    # ============================================================
+
+    fig.update_layout(
+        title=dict(
+            text=title,
+            x=0.5,
+            xanchor="center",
+        ),
+        template="plotly_white",
+        width=width,
+        height=height,
+        margin=dict(
+            l=80,
+            r=45,
+            t=100,
+            b=65,
+        ),
+        hovermode="closest",
+        showlegend=False,
+    )
+
+    return fig
+
+def jarque_bera_test(results):
+    """
+    Perform the Jarque-Bera test of residual normality.
+
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted ARIMA model results.
+
+    Returns
+    -------
+    pandas.Series
+        Jarque-Bera statistic, degrees of freedom, p-value,
+        residual skewness, and residual kurtosis.
+
+    Notes
+    -----
+    The null hypothesis is that the residuals are normally distributed.
+
+    The Jarque-Bera test is based on the sample skewness and kurtosis
+    of the residuals. Under the null hypothesis, the test statistic
+    has an asymptotic chi-squared distribution with two degrees of
+    freedom.
+
+    Skewness and kurtosis are reported alongside the test statistic
+    to help identify the source of departures from normality.
+    Kurtosis is reported in the conventional form for which the
+    Normal distribution has kurtosis equal to 3.
+    """
+
+    residuals = np.asarray(results.resid)
+    residuals = residuals[np.isfinite(residuals)]
+
+    if residuals.size < 3:
+        raise ValueError(
+            "At least three finite residual observations are required."
+        )
+
+    jb = jarque_bera(residuals)
+
+    residual_skewness = skew(
+        residuals,
+        bias=False,
+    )
+
+    residual_kurtosis = kurtosis(
+        residuals,
+        fisher=False,
+        bias=False,
+    )
+
+    return pd.Series(
+        {
+            "Jarque-Bera statistic": float(jb.statistic),
+            "Degrees of freedom": 2,
+            "P-value": float(jb.pvalue),
+            "Skewness": float(residual_skewness),
+            "Kurtosis": float(residual_kurtosis),
+        },
+        name="Jarque-Bera test",
     )
