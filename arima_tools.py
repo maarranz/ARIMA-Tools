@@ -50,6 +50,7 @@ __all__ = [
     "auto_arima",
     "recursive_estimation",
     "plot_parameter_stability",
+    "auto_arima_summary",
 ]
 
 def root_diagnostics(results):
@@ -1599,32 +1600,42 @@ def compare_models(*results, names=None):
 
     return table.set_index("Model")
 
-
-
-
 def order_search(
     y,
     p_max=4,
     q_max=4,
-    d=0,
+    d_min=0,
+    d_max=0,
     criterion="BIC",
     trend=None,
 ):
     """
-    Search over ARIMA(p,d,q) orders using information criteria.
+    Search over a grid of nonseasonal ARIMA(p,d,q) models using
+    information criteria.
 
     Parameters
     ----------
     y : array-like
         Time series to be modeled.
+
     p_max : int, default 4
-        Maximum AR order considered.
+        Maximum AR order considered. The search includes
+        p = 0, ..., p_max.
+
     q_max : int, default 4
-        Maximum MA order considered.
-    d : int, default 0
-        Order of integration.
+        Maximum MA order considered. The search includes
+        q = 0, ..., q_max.
+
+    d_min : int, default 0
+        Minimum order of integration considered.
+
+    d_max : int, default 0
+        Maximum order of integration considered. The search includes
+        d = d_min, ..., d_max.
+
     criterion : {"AIC", "AICc", "BIC", "HQIC"}, default "BIC"
         Information criterion used to sort the results.
+
     trend : str or None, default None
         Trend specification passed to statsmodels ARIMA.
 
@@ -1636,6 +1647,9 @@ def order_search(
 
     Notes
     -----
+    The function performs a transparent grid search over the specified
+    nonseasonal ARIMA(p,d,q) model space.
+
     All four information criteria are reported regardless of the
     criterion used for sorting.
 
@@ -1651,21 +1665,34 @@ def order_search(
 
     where k is the number of estimated parameters and n is the
     number of observations used in estimation.
+
+    This function does not perform automatic differencing tests.
+    The range of integration orders is explicitly chosen by the user.
     """
 
     # ------------------------------------------------------------
-    # Validate inputs
+    # Validate integer inputs
     # ------------------------------------------------------------
 
     for value, name in [
         (p_max, "p_max"),
         (q_max, "q_max"),
-        (d, "d"),
+        (d_min, "d_min"),
+        (d_max, "d_max"),
     ]:
         if not isinstance(value, (int, np.integer)) or value < 0:
             raise ValueError(
                 f"{name} must be a non-negative integer."
             )
+
+    if d_min > d_max:
+        raise ValueError(
+            "d_min must be less than or equal to d_max."
+        )
+
+    # ------------------------------------------------------------
+    # Validate information criterion
+    # ------------------------------------------------------------
 
     criteria = {
         "aic": "AIC",
@@ -1689,96 +1716,129 @@ def order_search(
 
     rows = []
 
-    for p in range(p_max + 1):
-        for q in range(q_max + 1):
+    for d in range(d_min, d_max + 1):
 
-            order = (p, d, q)
+        for p in range(p_max + 1):
 
-            try:
-                # Suppress repetitive statsmodels warnings only
-                # during the estimation of this candidate model.
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
+            for q in range(q_max + 1):
 
-                    model = ARIMA(
-                        y,
-                        order=order,
-                        trend=trend,
+                order = (p, d, q)
+
+                try:
+                    # Suppress repetitive statsmodels warnings only
+                    # during estimation of this candidate model.
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+
+                        model = ARIMA(
+                            y,
+                            order=order,
+                            trend=trend,
+                        )
+
+                        result = model.fit()
+
+                    # ------------------------------------------------
+                    # Number of observations and parameters
+                    # ------------------------------------------------
+
+                    nobs = int(result.nobs)
+                    k = len(result.params)
+
+                    # ------------------------------------------------
+                    # AICc
+                    # ------------------------------------------------
+
+                    denominator = nobs - k - 1
+
+                    if denominator > 0:
+                        aicc = (
+                            result.aic
+                            + (2 * k * (k + 1))
+                            / denominator
+                        )
+                    else:
+                        aicc = np.nan
+
+                    # ------------------------------------------------
+                    # Convergence information
+                    # ------------------------------------------------
+
+                    converged = bool(
+                        result.mle_retvals.get(
+                            "converged",
+                            True,
+                        )
                     )
 
-                    result = model.fit()
-
-                # Number of observations and estimated parameters
-                nobs = int(result.nobs)
-                k = len(result.params)
-
-                # AICc
-                denominator = nobs - k - 1
-
-                if denominator > 0:
-                    aicc = (
-                        result.aic
-                        + (2 * k * (k + 1)) / denominator
+                    rows.append(
+                        {
+                            "Order": order,
+                            "p": p,
+                            "d": d,
+                            "q": q,
+                            "N": nobs,
+                            "Parameters": k,
+                            "Log Likelihood": float(
+                                result.llf
+                            ),
+                            "AIC": float(
+                                result.aic
+                            ),
+                            "AICc": float(
+                                aicc
+                            ),
+                            "BIC": float(
+                                result.bic
+                            ),
+                            "HQIC": float(
+                                result.hqic
+                            ),
+                            "Converged": converged,
+                            "Status": (
+                                "OK"
+                                if converged
+                                else "Not converged"
+                            ),
+                        }
                     )
-                else:
-                    aicc = np.nan
 
-                # Convergence information
-                converged = bool(
-                    result.mle_retvals.get("converged", True)
-                )
+                except Exception as exc:
 
-                rows.append(
-                    {
-                        "Order": order,
-                        "p": p,
-                        "d": d,
-                        "q": q,
-                        "N": nobs,
-                        "Parameters": k,
-                        "Log Likelihood": float(result.llf),
-                        "AIC": float(result.aic),
-                        "AICc": float(aicc),
-                        "BIC": float(result.bic),
-                        "HQIC": float(result.hqic),
-                        "Converged": converged,
-                        "Status": (
-                            "OK"
-                            if converged
-                            else "Not converged"
-                        ),
-                    }
-                )
-
-            except Exception as exc:
-                rows.append(
-                    {
-                        "Order": order,
-                        "p": p,
-                        "d": d,
-                        "q": q,
-                        "N": np.nan,
-                        "Parameters": np.nan,
-                        "Log Likelihood": np.nan,
-                        "AIC": np.nan,
-                        "AICc": np.nan,
-                        "BIC": np.nan,
-                        "HQIC": np.nan,
-                        "Converged": False,
-                        "Status": (
-                            f"Failed: {type(exc).__name__}: {exc}"
-                        ),
-                    }
-                )
+                    rows.append(
+                        {
+                            "Order": order,
+                            "p": p,
+                            "d": d,
+                            "q": q,
+                            "N": np.nan,
+                            "Parameters": np.nan,
+                            "Log Likelihood": np.nan,
+                            "AIC": np.nan,
+                            "AICc": np.nan,
+                            "BIC": np.nan,
+                            "HQIC": np.nan,
+                            "Converged": False,
+                            "Status": (
+                                f"Failed: "
+                                f"{type(exc).__name__}: {exc}"
+                            ),
+                        }
+                    )
 
     # ------------------------------------------------------------
-    # Construct and sort results table
+    # Construct results table
     # ------------------------------------------------------------
 
     table = pd.DataFrame(rows)
 
+    # ------------------------------------------------------------
+    # Sort results
+    #
     # Converged models first, ordered by the selected IC.
     # Non-converged and failed models remain visible at the bottom.
+    # ------------------------------------------------------------
+
     table = table.sort_values(
         by=["Converged", criterion_column],
         ascending=[False, True],
@@ -1786,6 +1846,8 @@ def order_search(
     ).reset_index(drop=True)
 
     return table
+
+
 
 
 def select_model(table, criterion="BIC"):
@@ -2575,5 +2637,172 @@ def plot_parameter_stability(
     )
 
     return fig
+
+def auto_arima_summary(model):
+    """
+    Summarize a fitted StatsForecast AutoARIMA model.
+
+    Parameters
+    ----------
+    model : statsforecast.models.AutoARIMA
+        Fitted AutoARIMA object returned by auto_arima().
+
+    Returns
+    -------
+    pandas.Series
+        Compact summary of the selected ARIMA specification,
+        deterministic component, selection criterion, information
+        criteria, likelihood, sample size, and innovation variance.
+
+    Notes
+    -----
+    The deterministic component is described explicitly to distinguish
+    between a mean in a stationary model and drift in an integrated
+    model.
+
+    For d = 0, a mean refers to the unconditional mean of the
+    stationary ARMA process.
+
+    For d = 1, drift corresponds to a constant in the differenced
+    representation and therefore to linear drift in the level of
+    the series.
+    """
+
+    # ------------------------------------------------------------
+    # Check that the AutoARIMA object has been fitted
+    # ------------------------------------------------------------
+
+    if not hasattr(model, "model_"):
+        raise ValueError(
+            "The AutoARIMA model has not been fitted."
+        )
+
+    fitted = model.model_
+
+    # ------------------------------------------------------------
+    # Obtain StatsForecast model description
+    # ------------------------------------------------------------
+
+    description = arima_string(fitted)
+
+    # Examples:
+    #
+    # ARIMA(2,0,0) with zero mean
+    # ARIMA(2,0,0) with non-zero mean
+    # ARIMA(1,1,1) with drift
+    # ------------------------------------------------------------
+
+    description_lower = description.lower()
+
+    # ------------------------------------------------------------
+    # Selected ARIMA specification
+    # ------------------------------------------------------------
+
+    if " with " in description:
+        selected_model = description.split(" with ")[0]
+    else:
+        selected_model = description
+
+    # ------------------------------------------------------------
+    # Deterministic component
+    # ------------------------------------------------------------
+
+    if "with drift" in description_lower:
+
+        deterministic = "Drift"
+
+        interpretation = (
+            "Constant in differenced model; "
+            "linear drift in level"
+        )
+
+    elif "with non-zero mean" in description_lower:
+
+        deterministic = "Mean"
+
+        interpretation = (
+            "Non-zero unconditional mean"
+        )
+
+    elif "with zero mean" in description_lower:
+
+        deterministic = "None"
+
+        interpretation = (
+            "Zero unconditional mean"
+        )
+
+    else:
+
+        deterministic = "None"
+
+        interpretation = (
+            "No deterministic component reported"
+        )
+
+    # ------------------------------------------------------------
+    # Selection criterion
+    # ------------------------------------------------------------
+
+    criterion = str(model.ic).lower()
+
+    criterion_values = {
+        "aic": fitted.get("aic"),
+        "aicc": fitted.get("aicc"),
+        "bic": fitted.get("bic"),
+    }
+
+    criterion_value = criterion_values.get(
+        criterion,
+        np.nan,
+    )
+
+    # ------------------------------------------------------------
+    # Helper for safely converting optional values
+    # ------------------------------------------------------------
+
+    def _safe_float(value):
+        if value is None:
+            return np.nan
+        return float(value)
+
+    # ------------------------------------------------------------
+    # Construct summary
+    # ------------------------------------------------------------
+
+    summary = pd.Series(
+        {
+            "Selected model": selected_model,
+            "Deterministic component": deterministic,
+            "Interpretation": interpretation,
+            "Selection criterion": criterion.upper(),
+            "Criterion value": _safe_float(
+                criterion_value
+            ),
+            "AIC": _safe_float(
+                fitted.get("aic")
+            ),
+            "AICc": _safe_float(
+                fitted.get("aicc")
+            ),
+            "BIC": _safe_float(
+                fitted.get("bic")
+            ),
+            "Log Likelihood": _safe_float(
+                fitted.get("loglik")
+            ),
+            "Observations": (
+                int(fitted["nobs"])
+                if fitted.get("nobs") is not None
+                else np.nan
+            ),
+            "Innovation variance": _safe_float(
+                fitted.get("sigma2")
+            ),
+        },
+        name="AutoARIMA Summary",
+    )
+
+    return summary
 
 
