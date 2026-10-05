@@ -639,24 +639,20 @@ def dynamic_effects(results, horizon=20):
     Returns
     -------
     pandas.DataFrame
-        Table containing the dynamic effect (psi weight) and the
-        cumulative effect at each horizon.
+        Table containing 'Horizon', 'Dynamic Effect', and 'Cumulative Effect'.
+        'Dynamic Effect' reports the impulse response of the fitted model's
+        original endogenous/dependent variable to a one-unit innovation.
+        'Cumulative Effect' is the cumulative sum of those dynamic effects.
 
     Notes
     -----
-    The dynamic effects are the coefficients of the MA(infinity)
-    representation
+    The impulse responses are obtained from the fitted Statsmodels result.
+    For integrated ARIMA models, they incorporate the integration structure
+    and need not decay to zero.
 
-        y_t = psi(L) * epsilon_t,
-
-    where psi_0 = 1.
-
-    For an integrated ARIMA model, the reported effects refer to the
-    stationary ARMA representation associated with the fitted model.
-    They should not automatically be interpreted as effects on the
-    level of the original integrated variable.
-
-    The cumulative effect is the running sum of the psi weights.
+    For integrated models, 'Cumulative Effect' sums responses already
+    expressed on the original dependent-variable scale. It is not a
+    transformation used to reconstruct levels from differenced responses.
     """
 
     if not isinstance(horizon, (int, np.integer)) or horizon < 0:

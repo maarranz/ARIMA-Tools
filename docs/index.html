@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Miguel A. Arranz, PhD" />
+  <title>ARIMA-Tools: Public API</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <style>
+html { scroll-behavior: smooth; }
+body { max-width: 980px; margin: 48px auto; padding: 0 24px; color: #263442;
+font: 16px/1.6 system-ui, sans-serif; }
+h1,h2,h3 { line-height: 1.25; color: #173e63; }
+h2 { margin-top: 2.4rem; border-bottom: 1px solid #dbe3ea; padding-bottom: .4rem; }
+a { color: #145b91; text-underline-offset: 3px; }
+pre { background: #f3f6f8; border: 1px solid #dbe3ea; border-radius: 6px;
+padding: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+code { font-family: ui-monospace, monospace; font-size: .88em; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th,td { padding: 10px 12px; text-align: left; vertical-align: top;
+border-bottom: 1px solid #dbe3ea; }
+th { background: #edf3f8; }
+td:first-child { width: 65%; }
+table code { white-space: normal; overflow-wrap: anywhere; }
+#TOC { background: #f3f6f8; padding: 16px 24px; border-radius: 6px; }
+@media (max-width: 600px) { body { margin: 24px auto; padding: 0 16px; }
+table { font-size: .76rem; } th,td { padding: 8px; } }
+table { font-size: 0.88rem; }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">ARIMA-Tools: Public API</h1>
+<p class="subtitle">Software reference for Applied Time Series
+Econometrics (ATSE)</p>
+<p class="author">Miguel A. Arranz, PhD</p>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#overview-and-purpose" id="toc-overview-and-purpose">Overview and purpose</a></li>
+<li><a href="#installation-environment-and-import" id="toc-installation-environment-and-import">Installation, environment,
+and import</a></li>
+<li><a href="#estimation-and-parameter-diagnostics" id="toc-estimation-and-parameter-diagnostics">Estimation and parameter
+diagnostics</a></li>
+<li><a href="#model-diagnostics" id="toc-model-diagnostics">Model
+diagnostics</a></li>
+<li><a href="#model-comparison-and-selection" id="toc-model-comparison-and-selection">Model comparison and
+selection</a></li>
+<li><a href="#dynamic-effects-and-parameter-stability" id="toc-dynamic-effects-and-parameter-stability">Dynamic effects and
+parameter stability</a></li>
+<li><a href="#forecasting" id="toc-forecasting">Forecasting</a></li>
+<li><a href="#compact-api-summary" id="toc-compact-api-summary">Compact
+API summary</a></li>
+<li><a href="#course-resources-and-author" id="toc-course-resources-and-author">Course, resources, and
+author</a></li>
+</ul>
+</nav>
+<h2 id="overview-and-purpose">Overview and purpose</h2>
+<p>ARIMA-Tools was developed for the <strong>Applied Time Series
+Econometrics (ATSE)</strong> course at <strong>Universidad Carlos III de
+Madrid</strong>. It complements Statsmodels and StatsForecast with
+teaching-oriented tables, summaries, numerical forecasts, and
+interactive Plotly figures.</p>
+<p>This document describes the software/API. The ATSE course material
+provides the econometric theory; the Labs provide fuller worked examples
+and exercises. The package currently exposes <strong>26 public
+functions</strong> through a deliberately flat API: use
+<code>import arima_tools as at</code> and call
+<code>at.function(...)</code>. Internal modules organize the
+implementation; users do not need submodule imports.</p>
+<p>Diagnostics have three layers: parameters and model structure,
+residual behavior, and model behavior (dynamics and parameter
+stability). These concepts overlap the implementation modules.</p>
+<h2 id="installation-environment-and-import">Installation, environment,
+and import</h2>
+<p>From the repository root, recreate the environment only if
+needed:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> env create <span class="at">-f</span> environment.yml</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> activate atse_arma_tools</span></code></pre></div>
+<p>If it already exists, activate it without recreating it. <a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">environment.yml</a>
+specifies Python 3.14 and the required packages. Run Python or
+JupyterLab from the repository root so the local package is importable;
+no package-install command is currently provided.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima.model <span class="im">import</span> ARIMA</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima_process <span class="im">import</span> ArmaProcess</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> arima_tools <span class="im">as</span> at</span></code></pre></div>
+<h3 id="small-example-used-below">Small example used below</h3>
+<p>The explicit data-generating process is a zero-mean ARMA(1,1):
+<code>y[t] = 0.7*y[t-1] + eps[t] + 0.4*eps[t-1]</code>, with independent
+standard-normal innovations (variance 1). The fixed seed,
+100-observation burn-in, and 240 retained observations keep the example
+reproducible and small. Monthly dates are illustrative labels for this
+simulated series.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">12345</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>process <span class="op">=</span> ArmaProcess(ar<span class="op">=</span>[<span class="dv">1</span>, <span class="op">-</span><span class="fl">0.7</span>], ma<span class="op">=</span>[<span class="dv">1</span>, <span class="fl">0.4</span>])</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> pd.Series(</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    process.generate_sample(nsample<span class="op">=</span><span class="dv">240</span>, burnin<span class="op">=</span><span class="dv">100</span>, distrvs<span class="op">=</span>rng.standard_normal),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>pd.date_range(<span class="st">&quot;2000-01-01&quot;</span>, periods<span class="op">=</span><span class="dv">240</span>, freq<span class="op">=</span><span class="st">&quot;MS&quot;</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">&quot;y&quot;</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> ARIMA(y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>), trend<span class="op">=</span><span class="st">&quot;n&quot;</span>).fit()</span></code></pre></div>
+<p>Run the Python blocks below in sequence in the same fresh session.
+All examples refer to this explicitly defined <code>y</code> and
+<code>result</code>. Functions accepting <code>results</code> or
+<code>result</code> normally expect a fitted Statsmodels ARIMA result.
+Exceptions, such as AutoARIMA summaries and plots of recursive tables,
+are identified below. Tables are pandas objects; plotting functions
+return Plotly <code>Figure</code> objects. In a notebook, display a
+returned figure or call its <code>.show()</code> method.</p>
+<h2 id="estimation-and-parameter-diagnostics">Estimation and parameter
+diagnostics</h2>
+<p>Fit models with Statsmodels <code>ARIMA(...).fit()</code>.
+<code>at.coefficient_diagnostics()</code> returns estimates, standard
+errors, z-statistics, asymptotic p-values, and confidence intervals
+(<code>confidence=0.95</code>). <code>at.parameter_correlation()</code>
+returns the estimated parameter correlation matrix;
+<code>include_variance=True</code> includes <code>sigma2</code>.
+<code>at.joint_significance()</code> takes parameter names and returns a
+joint Wald test against zero.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>coefficients <span class="op">=</span> at.coefficient_diagnostics(result)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>correlations <span class="op">=</span> at.parameter_correlation(result, include_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>joint_test <span class="op">=</span> at.joint_significance(result, parameters<span class="op">=</span>[<span class="st">&quot;ar.L1&quot;</span>, <span class="st">&quot;ma.L1&quot;</span>])</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(coefficients.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div>
+<p><code>confidence</code> must lie strictly between zero and one.
+Consult <code>result.param_names</code> when specifying joint
+restrictions. These functions report inference rather than automatic
+significance classifications.</p>
+<h2 id="model-diagnostics">Model diagnostics</h2>
+<h3 id="parameters-and-model-structure">Parameters and model
+structure</h3>
+<p><code>at.root_diagnostics()</code> tabulates AR/MA roots, moduli, and
+inverses. <code>at.is_causal()</code> and
+<code>at.is_invertible()</code> return booleans;
+<code>at.root_summary()</code> combines the root checks in a Series.
+Causality refers to the stationary AR component, not the level
+stationarity of an integrated series.</p>
+<p><code>at.common_roots()</code> reports AR–MA pairs within
+inverse-root distance <code>tol=0.05</code>;
+<code>exact_tol=1e-10</code> distinguishes numerically common from
+near-common pairs. <code>at.plot_inverse_roots()</code> returns their
+interactive plot with the unit circle.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>roots <span class="op">=</span> at.root_diagnostics(result)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>causal <span class="op">=</span> at.is_causal(result)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>invertible <span class="op">=</span> at.is_invertible(result)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>common <span class="op">=</span> at.common_roots(result)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>root_checks <span class="op">=</span> at.root_summary(result)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>root_plot <span class="op">=</span> at.plot_inverse_roots(result)</span></code></pre></div>
+<h3 id="residual-behavior">Residual behavior</h3>
+<p><code>at.ljung_box_test()</code> requires a lag or sequence of lags
+greater than <code>p + q</code>, and reports adjusted degrees of freedom
+and p-values. <code>at.residual_correlations()</code> returns residual
+ACF/PACF values and approximate individual white-noise bounds; these
+bounds are not a joint test. Its lag limit must be smaller than the
+residual sample, with the additional PACF restrictions imposed by
+Statsmodels.</p>
+<p><code>at.jarque_bera_test()</code> returns the normality statistic,
+p-value, skewness, and conventional kurtosis.
+<code>at.plot_residual_diagnostics()</code> combines residuals, ACF,
+PACF, and valid-lag Ljung–Box p-values in a four-panel figure.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ljung_box <span class="op">=</span> at.ljung_box_test(result, lags<span class="op">=</span>[<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>])</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>residual_acf_pacf <span class="op">=</span> at.residual_correlations(result, lags<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>normality <span class="op">=</span> at.jarque_bera_test(result)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>residual_plot <span class="op">=</span> at.plot_residual_diagnostics(result, lags<span class="op">=</span><span class="dv">20</span>)</span></code></pre></div>
+<h2 id="model-comparison-and-selection">Model comparison and
+selection</h2>
+<p><code>at.compare_models()</code> accepts at least two fitted models
+and optional distinct <code>names</code>. Its table includes likelihood,
+AIC, AICc, BIC, and HQIC. Compare models for the same dependent variable
+and sample.</p>
+<p><code>at.order_search()</code> searches nonseasonal orders from zero
+to <code>p_max</code>/<code>q_max</code>, and differencing orders from
+<code>d_min</code> through <code>d_max</code> (both default to zero).
+<code>criterion</code> sorts the table; convergence status is retained.
+<code>at.select_model()</code> returns the eligible row minimizing AIC,
+AICc, BIC, or HQIC, excluding non-converged models when that column is
+present. Selection is not a diagnostic assessment.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>alternative <span class="op">=</span> ARIMA(y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>), trend<span class="op">=</span><span class="st">&quot;n&quot;</span>).fit()</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>comparison <span class="op">=</span> at.compare_models(result, alternative, names<span class="op">=</span>[<span class="st">&quot;ARMA(1,1)&quot;</span>, <span class="st">&quot;AR(1)&quot;</span>])</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>search <span class="op">=</span> at.order_search(y, p_max<span class="op">=</span><span class="dv">2</span>, q_max<span class="op">=</span><span class="dv">2</span>, criterion<span class="op">=</span><span class="st">&quot;BIC&quot;</span>, trend<span class="op">=</span><span class="st">&quot;n&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>selected <span class="op">=</span> at.select_model(search, criterion<span class="op">=</span><span class="st">&quot;BIC&quot;</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(selected)</span></code></pre></div>
+<p><code>at.auto_arima()</code> returns a fitted <strong>StatsForecast
+AutoARIMA</strong> object, not a Statsmodels result. This nonseasonal
+benchmark accepts AIC, AICc, or BIC. With <code>d=None</code>, AutoARIMA
+chooses differencing; <code>allow_mean</code> and
+<code>allow_drift</code> control deterministic components.
+<code>at.auto_arima_summary()</code> takes that fitted object and
+returns a compact Series, including its mean/drift interpretation. The
+package’s Statsmodels diagnostic/forecast functions do not accept this
+object directly.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>automatic <span class="op">=</span> at.auto_arima(y, criterion<span class="op">=</span><span class="st">&quot;BIC&quot;</span>, max_p<span class="op">=</span><span class="dv">2</span>, max_q<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>automatic_summary <span class="op">=</span> at.auto_arima_summary(automatic)</span></code></pre></div>
+<h2 id="dynamic-effects-and-parameter-stability">Dynamic effects and
+parameter stability</h2>
+<p><code>at.dynamic_effects()</code> returns the fitted result’s
+Statsmodels impulse responses and their cumulative sums, from horizon
+zero through <code>horizon=20</code>.
+<code>at.plot_dynamic_effects()</code> plots both series. These helpers
+use the fitted state-space response: in the installed Statsmodels
+version, a fitted random walk has a unit response at every horizon. They
+do not manually difference or reintegrate the supplied model.</p>
+<p><code>at.recursive_estimation()</code> takes the original series and
+an <code>(p, d, q)</code> order and returns a long-format
+expanding-window table with estimates, standard errors, intervals,
+sample endpoints, and convergence status. <code>initial</code> can be an
+observation count, a fraction between zero and one, or <code>None</code>
+(an automatic 10% rule subject to <code>min_df=20</code>).</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>effects <span class="op">=</span> at.dynamic_effects(result, horizon<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>effects_plot <span class="op">=</span> at.plot_dynamic_effects(result, horizon<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>recursive <span class="op">=</span> at.recursive_estimation(y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>), initial<span class="op">=</span><span class="dv">220</span>, trend<span class="op">=</span><span class="st">&quot;n&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>stability_plot <span class="op">=</span> at.plot_parameter_stability(recursive, parameters<span class="op">=</span>[<span class="st">&quot;ar.L1&quot;</span>, <span class="st">&quot;ma.L1&quot;</span>])</span></code></pre></div>
+<p><code>at.plot_parameter_stability()</code> takes the recursive table.
+<code>parameters=None</code> displays all parameters except
+<code>sigma2</code>; a string or sequence selects parameters explicitly.
+<code>reference=True</code> adds full-sample estimates. An optional
+<code>breakpoint</code> is only a graphical marker and must match the
+table’s endpoint index; it is not a structural-break test.</p>
+<h2 id="forecasting">Forecasting</h2>
+<p>All four functions below accept a fitted <strong>Statsmodels ARIMA
+result</strong>. <code>steps=20</code> is a positive integer, and
+<code>level=0.95</code> is a central normal-theory prediction-interval
+coverage strictly between zero and one.</p>
+<ul>
+<li><code>at.forecast_error_variance()</code> returns a NumPy array for
+horizons 1 through <code>steps</code>. It independently calculates
+innovation-based variance from the full ARIMA psi weights, including
+ordinary/seasonal integration, on the original dependent-variable
+scale.</li>
+<li><code>at.dynamic_forecast()</code> returns a DataFrame indexed by
+<code>Horizon</code>, with <code>Forecast</code>, <code>FEV</code>,
+<code>SE</code>, <code>Lower</code>, and <code>Upper</code>. Forecasts
+are recursive from the sample end; uncertainty comes from the
+independent FEV calculation.</li>
+<li><code>at.plot_forecast()</code> returns an observed/forecast figure
+with two <strong>unfilled interval boundary lines</strong> and a
+forecast-origin marker.</li>
+<li><code>at.plot_fan_chart()</code> returns a figure with nested shaded
+central intervals, stronger centrally and fading outward, and a clear
+point forecast.</li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fev <span class="op">=</span> at.forecast_error_variance(result, steps<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> at.dynamic_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>forecast_plot <span class="op">=</span> at.plot_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>, history<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>fan_plot <span class="op">=</span> at.plot_fan_chart(result, steps<span class="op">=</span><span class="dv">20</span>, history<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(forecast.head().<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div>
+<p>The default fan levels are exactly
+<strong><code>(0.50, 0.70, 0.80, 0.90, 0.95, 0.99)</code></strong>.
+Custom levels must be nonempty, distinct, and strictly between zero and
+one; input order does not matter. In both plots, <code>history=50</code>
+shows the final 50 observations, <code>history=None</code> shows the
+entire sample, and a larger request shows all available observations.
+Positive integer histories are required otherwise. Supported time
+indices continue into the forecast; period indices display period-start
+dates. Unsupported indices use observation positions if Statsmodels can
+produce the forecast; its forecasting errors propagate.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>custom_fan <span class="op">=</span> at.plot_fan_chart(result, steps<span class="op">=</span><span class="dv">12</span>, levels<span class="op">=</span>(<span class="fl">0.95</span>, <span class="fl">0.50</span>, <span class="fl">0.80</span>), history<span class="op">=</span><span class="va">None</span>)</span></code></pre></div>
+<p>FEV treats fitted parameters and past innovations as known;
+finite-sample state uncertainty or missing observations can cause
+differences from Statsmodels’ state-space variances.
+Parameter-estimation uncertainty is not included. Concentrated-scale
+fits use <code>result.scale</code>; other fits use the
+<code>sigma2</code> parameter. Models needing future external regressors
+are outside the current forecasting interface. No transformations or
+evaluation procedures are added by these functions.</p>
+<h2 id="compact-api-summary">Compact API summary</h2>
+<p>Exact public signatures and principal returns are listed below.
+<code>results</code> and <code>result</code> are the parameter names
+actually used by the API; both denote a fitted Statsmodels result unless
+otherwise specified above. Plot size/title arguments can customize the
+older diagnostic figures; forecast figures use their built-in layout and
+can be edited through the returned Plotly object.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: left;">Public call</th>
+<th style="text-align: left;">Return / contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>at.root_diagnostics(results)</code></td>
+<td style="text-align: left;">DataFrame: AR/MA roots and inverses</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.is_causal(results, tol=1e-10)</code></td>
+<td style="text-align: left;">bool: AR causality</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.is_invertible(results, tol=1e-10)</code></td>
+<td style="text-align: left;">bool: MA invertibility</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.common_roots(results, tol=0.05, exact_tol=1e-10)</code></td>
+<td style="text-align: left;">DataFrame: common/near-common root
+pairs</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.plot_inverse_roots(results, tol=0.05, exact_tol=1e-10, title=&#39;Inverse Roots&#39;)</code></td>
+<td style="text-align: left;">Figure: inverse roots</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.root_summary(results, tol=0.05, exact_tol=1e-10)</code></td>
+<td style="text-align: left;">Series: root checks</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.coefficient_diagnostics(results, confidence=0.95)</code></td>
+<td style="text-align: left;">DataFrame: estimates and inference</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.parameter_correlation(results, include_variance=False)</code></td>
+<td style="text-align: left;">DataFrame: parameter correlations</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.joint_significance(results, parameters)</code></td>
+<td style="text-align: left;">Series: joint Wald test</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.ljung_box_test(results, lags)</code></td>
+<td style="text-align: left;">DataFrame: adjusted Ljung–Box tests</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.residual_correlations(results, lags=20, confidence=0.95)</code></td>
+<td style="text-align: left;">DataFrame: residual ACF/PACF and
+bounds</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.plot_residual_diagnostics(results, lags=20, confidence=0.95, width=1000, height=1200, title=&#39;Residual Diagnostics&#39;)</code></td>
+<td style="text-align: left;">Figure: four residual panels</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.jarque_bera_test(results)</code></td>
+<td style="text-align: left;">Series: normality test and moments</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.dynamic_effects(results, horizon=20)</code></td>
+<td style="text-align: left;">DataFrame: effects and cumulative
+effects</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.plot_dynamic_effects(results, horizon=20, width=900, height=700, title=&#39;Dynamic Effects of an Innovation&#39;)</code></td>
+<td style="text-align: left;">Figure: effects and cumulative
+effects</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.compare_models(*results, names=None)</code></td>
+<td style="text-align: left;">DataFrame: likelihood and information
+criteria</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.select_model(table, criterion=&#39;BIC&#39;)</code></td>
+<td style="text-align: left;">Series: selected table row</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.order_search(y, p_max=4, q_max=4, d_min=0, d_max=0, criterion=&#39;BIC&#39;, trend=None)</code></td>
+<td style="text-align: left;">DataFrame: candidate orders and fit
+status</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.auto_arima(y, criterion=&#39;BIC&#39;, d=None, max_p=5, max_q=5, stepwise=True, allow_mean=True, allow_drift=True)</code></td>
+<td style="text-align: left;">Fitted StatsForecast AutoARIMA object</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.recursive_estimation(y, order, initial=None, min_df=20, confidence=0.95, trend=None)</code></td>
+<td style="text-align: left;">DataFrame: recursive estimates and fit
+status</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.plot_parameter_stability(recursive, parameters=None, reference=True, breakpoint=None, width=950, height_per_panel=300, title=&#39;Recursive Parameter Stability&#39;)</code></td>
+<td style="text-align: left;">Figure: recursive estimates and
+intervals</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.auto_arima_summary(model)</code></td>
+<td style="text-align: left;">Series: fitted AutoARIMA summary</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.forecast_error_variance(result, steps=20)</code></td>
+<td style="text-align: left;">ndarray: forecast-error variances</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.dynamic_forecast(result, steps=20, level=0.95)</code></td>
+<td style="text-align: left;">DataFrame: Forecast, FEV, SE, Lower,
+Upper</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.plot_forecast(result, steps=20, level=0.95, history=50)</code></td>
+<td style="text-align: left;">Figure: forecast and unfilled interval
+lines</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>at.plot_fan_chart(result, steps=20, levels=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99), history=50)</code></td>
+<td style="text-align: left;">Figure: forecast and nested shaded
+intervals</td>
+</tr>
+</tbody>
+</table>
+<h2 id="course-resources-and-author">Course, resources, and author</h2>
+<p><strong>ATSE course material and Labs — Universidad Carlos III de
+Madrid:</strong> public link to be added when available. The course
+material supplies theory; the Labs supply fuller examples and exercises.
+This API reference is not a substitute for either.</p>
+<ul>
+<li><a href="https://github.com/maarranz/ARIMA-Tools">Repository and
+README</a></li>
+<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/ARIMA_Tools_Development.ipynb">Development/demonstration
+notebook</a></li>
+<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">Environment
+specification</a></li>
+<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/LICENSE">MIT
+License</a></li>
+<li><a href="ARIMA_Tools_Documentation.qmd">Quarto source</a></li>
+</ul>
+<p><strong>Miguel A. Arranz, PhD</strong><br />
+Department of Economics<br />
+Universidad Carlos III de Madrid (UC3M)<br />
+Email: <a href="mailto:maarranz@eco.uc3m.es">maarranz@eco.uc3m.es</a><br />
+ORCID: <a href="https://orcid.org/0000-0002-5951-2284">0000-0002-5951-2284</a></p>
+<h3 id="rebuilding-the-html">Rebuilding the HTML</h3>
+<p>The examples are ordinary Python code blocks, validated in a fresh
+session rather than executed during rendering. With Quarto installed,
+the portable standalone build used for this page is:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> pandoc docs/ARIMA_Tools_Documentation.qmd <span class="dt">\</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from</span> markdown <span class="at">--to</span> html5 <span class="at">--standalone</span> <span class="at">--toc</span> <span class="at">--toc-depth</span><span class="op">=</span>2 <span class="dt">\</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--embed-resources</span> <span class="at">-o</span> docs/index.html</span></code></pre></div>
+</body>
+</html>

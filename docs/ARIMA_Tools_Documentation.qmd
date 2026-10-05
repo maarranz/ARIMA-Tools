@@ -1,0 +1,249 @@
+---
+title: 'ARIMA-Tools: Public API'
+subtitle: Software reference for Applied Time Series Econometrics (ATSE)
+author: Miguel A. Arranz, PhD
+affiliation: Department of Economics, Universidad Carlos III de Madrid (UC3M)
+email: maarranz@eco.uc3m.es
+orcid: https://orcid.org/0000-0002-5951-2284
+lang: en
+minimal: true
+header-includes:
+- |
+  <style>
+  html { scroll-behavior: smooth; }
+  body { max-width: 980px; margin: 48px auto; padding: 0 24px; color: #263442;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1,h2,h3 { line-height: 1.25; color: #173e63; }
+  h2 { margin-top: 2.4rem; border-bottom: 1px solid #dbe3ea; padding-bottom: .4rem; }
+  a { color: #145b91; text-underline-offset: 3px; }
+  pre { background: #f3f6f8; border: 1px solid #dbe3ea; border-radius: 6px;
+        padding: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  code { font-family: ui-monospace, monospace; font-size: .88em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+  th,td { padding: 10px 12px; text-align: left; vertical-align: top;
+          border-bottom: 1px solid #dbe3ea; }
+  th { background: #edf3f8; }
+  td:first-child { width: 65%; }
+  table code { white-space: normal; overflow-wrap: anywhere; }
+  #TOC { background: #f3f6f8; padding: 16px 24px; border-radius: 6px; }
+  @media (max-width: 600px) { body { margin: 24px auto; padding: 0 16px; }
+    table { font-size: .76rem; } th,td { padding: 8px; } }
+  table { font-size: 0.88rem; }
+  </style>
+format:
+  html:
+    output-file: index.html
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+    theme: none
+    code-overflow: wrap
+---
+
+## Overview and purpose
+
+ARIMA-Tools was developed for the **Applied Time Series Econometrics (ATSE)** course at **Universidad Carlos III de Madrid**. It complements Statsmodels and StatsForecast with teaching-oriented tables, summaries, numerical forecasts, and interactive Plotly figures.
+
+This document describes the software/API. The ATSE course material provides the econometric theory; the Labs provide fuller worked examples and exercises. The package currently exposes **26 public functions** through a deliberately flat API: use `import arima_tools as at` and call `at.function(...)`. Internal modules organize the implementation; users do not need submodule imports.
+
+Diagnostics have three layers: parameters and model structure, residual behavior, and model behavior (dynamics and parameter stability). These concepts overlap the implementation modules.
+
+## Installation, environment, and import
+
+From the repository root, recreate the environment only if needed:
+
+```bash
+mamba env create -f environment.yml
+mamba activate atse_arma_tools
+```
+
+If it already exists, activate it without recreating it. [environment.yml](https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml) specifies Python 3.14 and the required packages. Run Python or JupyterLab from the repository root so the local package is importable; no package-install command is currently provided.
+
+```python
+import numpy as np
+import pandas as pd
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.arima_process import ArmaProcess
+import arima_tools as at
+```
+
+### Small example used below
+
+The explicit data-generating process is a zero-mean ARMA(1,1):
+`y[t] = 0.7*y[t-1] + eps[t] + 0.4*eps[t-1]`, with independent standard-normal innovations (variance 1). The fixed seed, 100-observation burn-in, and 240 retained observations keep the example reproducible and small. Monthly dates are illustrative labels for this simulated series.
+
+```python
+rng = np.random.default_rng(12345)
+process = ArmaProcess(ar=[1, -0.7], ma=[1, 0.4])
+y = pd.Series(
+    process.generate_sample(nsample=240, burnin=100, distrvs=rng.standard_normal),
+    index=pd.date_range("2000-01-01", periods=240, freq="MS"),
+    name="y",
+)
+result = ARIMA(y, order=(1, 0, 1), trend="n").fit()
+```
+
+Run the Python blocks below in sequence in the same fresh session. All examples refer to this explicitly defined `y` and `result`. Functions accepting `results` or `result` normally expect a fitted Statsmodels ARIMA result. Exceptions, such as AutoARIMA summaries and plots of recursive tables, are identified below. Tables are pandas objects; plotting functions return Plotly `Figure` objects. In a notebook, display a returned figure or call its `.show()` method.
+
+## Estimation and parameter diagnostics
+
+Fit models with Statsmodels `ARIMA(...).fit()`. `at.coefficient_diagnostics()` returns estimates, standard errors, z-statistics, asymptotic p-values, and confidence intervals (`confidence=0.95`). `at.parameter_correlation()` returns the estimated parameter correlation matrix; `include_variance=True` includes `sigma2`. `at.joint_significance()` takes parameter names and returns a joint Wald test against zero.
+
+```python
+coefficients = at.coefficient_diagnostics(result)
+correlations = at.parameter_correlation(result, include_variance=True)
+joint_test = at.joint_significance(result, parameters=["ar.L1", "ma.L1"])
+print(coefficients.round(4))
+```
+
+`confidence` must lie strictly between zero and one. Consult `result.param_names` when specifying joint restrictions. These functions report inference rather than automatic significance classifications.
+
+## Model diagnostics
+
+### Parameters and model structure
+
+`at.root_diagnostics()` tabulates AR/MA roots, moduli, and inverses. `at.is_causal()` and `at.is_invertible()` return booleans; `at.root_summary()` combines the root checks in a Series. Causality refers to the stationary AR component, not the level stationarity of an integrated series.
+
+`at.common_roots()` reports AR–MA pairs within inverse-root distance `tol=0.05`; `exact_tol=1e-10` distinguishes numerically common from near-common pairs. `at.plot_inverse_roots()` returns their interactive plot with the unit circle.
+
+```python
+roots = at.root_diagnostics(result)
+causal = at.is_causal(result)
+invertible = at.is_invertible(result)
+common = at.common_roots(result)
+root_checks = at.root_summary(result)
+root_plot = at.plot_inverse_roots(result)
+```
+
+### Residual behavior
+
+`at.ljung_box_test()` requires a lag or sequence of lags greater than `p + q`, and reports adjusted degrees of freedom and p-values. `at.residual_correlations()` returns residual ACF/PACF values and approximate individual white-noise bounds; these bounds are not a joint test. Its lag limit must be smaller than the residual sample, with the additional PACF restrictions imposed by Statsmodels.
+
+`at.jarque_bera_test()` returns the normality statistic, p-value, skewness, and conventional kurtosis. `at.plot_residual_diagnostics()` combines residuals, ACF, PACF, and valid-lag Ljung–Box p-values in a four-panel figure.
+
+```python
+ljung_box = at.ljung_box_test(result, lags=[5, 10, 20])
+residual_acf_pacf = at.residual_correlations(result, lags=20)
+normality = at.jarque_bera_test(result)
+residual_plot = at.plot_residual_diagnostics(result, lags=20)
+```
+
+## Model comparison and selection
+
+`at.compare_models()` accepts at least two fitted models and optional distinct `names`. Its table includes likelihood, AIC, AICc, BIC, and HQIC. Compare models for the same dependent variable and sample.
+
+`at.order_search()` searches nonseasonal orders from zero to `p_max`/`q_max`, and differencing orders from `d_min` through `d_max` (both default to zero). `criterion` sorts the table; convergence status is retained. `at.select_model()` returns the eligible row minimizing AIC, AICc, BIC, or HQIC, excluding non-converged models when that column is present. Selection is not a diagnostic assessment.
+
+```python
+alternative = ARIMA(y, order=(1, 0, 0), trend="n").fit()
+comparison = at.compare_models(result, alternative, names=["ARMA(1,1)", "AR(1)"])
+search = at.order_search(y, p_max=2, q_max=2, criterion="BIC", trend="n")
+selected = at.select_model(search, criterion="BIC")
+print(selected)
+```
+
+`at.auto_arima()` returns a fitted **StatsForecast AutoARIMA** object, not a Statsmodels result. This nonseasonal benchmark accepts AIC, AICc, or BIC. With `d=None`, AutoARIMA chooses differencing; `allow_mean` and `allow_drift` control deterministic components. `at.auto_arima_summary()` takes that fitted object and returns a compact Series, including its mean/drift interpretation. The package's Statsmodels diagnostic/forecast functions do not accept this object directly.
+
+```python
+automatic = at.auto_arima(y, criterion="BIC", max_p=2, max_q=2)
+automatic_summary = at.auto_arima_summary(automatic)
+```
+
+## Dynamic effects and parameter stability
+
+`at.dynamic_effects()` returns the fitted result's Statsmodels impulse responses and their cumulative sums, from horizon zero through `horizon=20`. `at.plot_dynamic_effects()` plots both series. These helpers use the fitted state-space response: in the installed Statsmodels version, a fitted random walk has a unit response at every horizon. They do not manually difference or reintegrate the supplied model.
+
+`at.recursive_estimation()` takes the original series and an `(p, d, q)` order and returns a long-format expanding-window table with estimates, standard errors, intervals, sample endpoints, and convergence status. `initial` can be an observation count, a fraction between zero and one, or `None` (an automatic 10% rule subject to `min_df=20`).
+
+```python
+effects = at.dynamic_effects(result, horizon=12)
+effects_plot = at.plot_dynamic_effects(result, horizon=12)
+recursive = at.recursive_estimation(y, order=(1, 0, 1), initial=220, trend="n")
+stability_plot = at.plot_parameter_stability(recursive, parameters=["ar.L1", "ma.L1"])
+```
+
+`at.plot_parameter_stability()` takes the recursive table. `parameters=None` displays all parameters except `sigma2`; a string or sequence selects parameters explicitly. `reference=True` adds full-sample estimates. An optional `breakpoint` is only a graphical marker and must match the table's endpoint index; it is not a structural-break test.
+
+## Forecasting
+
+All four functions below accept a fitted **Statsmodels ARIMA result**. `steps=20` is a positive integer, and `level=0.95` is a central normal-theory prediction-interval coverage strictly between zero and one.
+
+- `at.forecast_error_variance()` returns a NumPy array for horizons 1 through `steps`. It independently calculates innovation-based variance from the full ARIMA psi weights, including ordinary/seasonal integration, on the original dependent-variable scale.
+- `at.dynamic_forecast()` returns a DataFrame indexed by `Horizon`, with `Forecast`, `FEV`, `SE`, `Lower`, and `Upper`. Forecasts are recursive from the sample end; uncertainty comes from the independent FEV calculation.
+- `at.plot_forecast()` returns an observed/forecast figure with two **unfilled interval boundary lines** and a forecast-origin marker.
+- `at.plot_fan_chart()` returns a figure with nested shaded central intervals, stronger centrally and fading outward, and a clear point forecast.
+
+```python
+fev = at.forecast_error_variance(result, steps=20)
+forecast = at.dynamic_forecast(result, steps=20, level=0.95)
+forecast_plot = at.plot_forecast(result, steps=20, level=0.95, history=50)
+fan_plot = at.plot_fan_chart(result, steps=20, history=50)
+print(forecast.head().round(4))
+```
+
+The default fan levels are exactly **`(0.50, 0.70, 0.80, 0.90, 0.95, 0.99)`**. Custom levels must be nonempty, distinct, and strictly between zero and one; input order does not matter. In both plots, `history=50` shows the final 50 observations, `history=None` shows the entire sample, and a larger request shows all available observations. Positive integer histories are required otherwise. Supported time indices continue into the forecast; period indices display period-start dates. Unsupported indices use observation positions if Statsmodels can produce the forecast; its forecasting errors propagate.
+
+```python
+custom_fan = at.plot_fan_chart(result, steps=12, levels=(0.95, 0.50, 0.80), history=None)
+```
+
+FEV treats fitted parameters and past innovations as known; finite-sample state uncertainty or missing observations can cause differences from Statsmodels' state-space variances. Parameter-estimation uncertainty is not included. Concentrated-scale fits use `result.scale`; other fits use the `sigma2` parameter. Models needing future external regressors are outside the current forecasting interface. No transformations or evaluation procedures are added by these functions.
+
+## Compact API summary
+
+Exact public signatures and principal returns are listed below. `results` and `result` are the parameter names actually used by the API; both denote a fitted Statsmodels result unless otherwise specified above. Plot size/title arguments can customize the older diagnostic figures; forecast figures use their built-in layout and can be edited through the returned Plotly object.
+
+| Public call | Return / contents |
+|:--|:--|
+| `at.root_diagnostics(results)` | DataFrame: AR/MA roots and inverses |
+| `at.is_causal(results, tol=1e-10)` | bool: AR causality |
+| `at.is_invertible(results, tol=1e-10)` | bool: MA invertibility |
+| `at.common_roots(results, tol=0.05, exact_tol=1e-10)` | DataFrame: common/near-common root pairs |
+| `at.plot_inverse_roots(results, tol=0.05, exact_tol=1e-10, title='Inverse Roots')` | Figure: inverse roots |
+| `at.root_summary(results, tol=0.05, exact_tol=1e-10)` | Series: root checks |
+| `at.coefficient_diagnostics(results, confidence=0.95)` | DataFrame: estimates and inference |
+| `at.parameter_correlation(results, include_variance=False)` | DataFrame: parameter correlations |
+| `at.joint_significance(results, parameters)` | Series: joint Wald test |
+| `at.ljung_box_test(results, lags)` | DataFrame: adjusted Ljung–Box tests |
+| `at.residual_correlations(results, lags=20, confidence=0.95)` | DataFrame: residual ACF/PACF and bounds |
+| `at.plot_residual_diagnostics(results, lags=20, confidence=0.95, width=1000, height=1200, title='Residual Diagnostics')` | Figure: four residual panels |
+| `at.jarque_bera_test(results)` | Series: normality test and moments |
+| `at.dynamic_effects(results, horizon=20)` | DataFrame: effects and cumulative effects |
+| `at.plot_dynamic_effects(results, horizon=20, width=900, height=700, title='Dynamic Effects of an Innovation')` | Figure: effects and cumulative effects |
+| `at.compare_models(*results, names=None)` | DataFrame: likelihood and information criteria |
+| `at.select_model(table, criterion='BIC')` | Series: selected table row |
+| `at.order_search(y, p_max=4, q_max=4, d_min=0, d_max=0, criterion='BIC', trend=None)` | DataFrame: candidate orders and fit status |
+| `at.auto_arima(y, criterion='BIC', d=None, max_p=5, max_q=5, stepwise=True, allow_mean=True, allow_drift=True)` | Fitted StatsForecast AutoARIMA object |
+| `at.recursive_estimation(y, order, initial=None, min_df=20, confidence=0.95, trend=None)` | DataFrame: recursive estimates and fit status |
+| `at.plot_parameter_stability(recursive, parameters=None, reference=True, breakpoint=None, width=950, height_per_panel=300, title='Recursive Parameter Stability')` | Figure: recursive estimates and intervals |
+| `at.auto_arima_summary(model)` | Series: fitted AutoARIMA summary |
+| `at.forecast_error_variance(result, steps=20)` | ndarray: forecast-error variances |
+| `at.dynamic_forecast(result, steps=20, level=0.95)` | DataFrame: Forecast, FEV, SE, Lower, Upper |
+| `at.plot_forecast(result, steps=20, level=0.95, history=50)` | Figure: forecast and unfilled interval lines |
+| `at.plot_fan_chart(result, steps=20, levels=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99), history=50)` | Figure: forecast and nested shaded intervals |
+
+## Course, resources, and author
+
+**ATSE course material and Labs — Universidad Carlos III de Madrid:** public link to be added when available. The course material supplies theory; the Labs supply fuller examples and exercises. This API reference is not a substitute for either.
+
+- [Repository and README](https://github.com/maarranz/ARIMA-Tools)
+- [Development/demonstration notebook](https://github.com/maarranz/ARIMA-Tools/blob/main/ARIMA_Tools_Development.ipynb)
+- [Environment specification](https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml)
+- [MIT License](https://github.com/maarranz/ARIMA-Tools/blob/main/LICENSE)
+- [Quarto source](ARIMA_Tools_Documentation.qmd)
+
+**Miguel A. Arranz, PhD**\
+Department of Economics\
+Universidad Carlos III de Madrid (UC3M)\
+Email: [maarranz@eco.uc3m.es](mailto:maarranz@eco.uc3m.es)\
+ORCID: [0000-0002-5951-2284](https://orcid.org/0000-0002-5951-2284)
+
+### Rebuilding the HTML
+
+The examples are ordinary Python code blocks, validated in a fresh session rather than executed during rendering. With Quarto installed, the portable standalone build used for this page is:
+
+```bash
+quarto pandoc docs/ARIMA_Tools_Documentation.qmd \
+  --from markdown --to html5 --standalone --toc --toc-depth=2 \
+  --embed-resources -o docs/index.html
+```
