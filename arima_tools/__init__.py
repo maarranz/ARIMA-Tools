@@ -51,6 +51,10 @@ __all__ = [
     "recursive_estimation",
     "plot_parameter_stability",
     "auto_arima_summary",
+    "forecast_error_variance",
+    "dynamic_forecast",
+    "plot_forecast",
+    "plot_fan_chart",
 ]
 
 from .estimation import (
@@ -84,3 +88,9 @@ from .model_selection import (
     auto_arima_summary,
 )
 
+from .forecasting import (
+    forecast_error_variance,
+    dynamic_forecast,
+    plot_forecast,
+    plot_fan_chart,
+)
