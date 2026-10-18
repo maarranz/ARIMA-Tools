@@ -736,9 +736,12 @@ def plot_dynamic_effects(
     The upper panel shows the individual psi weights. The lower
     panel shows their cumulative sum.
 
-    For integrated ARIMA models, these effects refer to the stationary
-    ARMA representation and are not automatically effects on the
-    level of the original variable.
+    Responses are those of the fitted Statsmodels model, including its
+    integration structure, on the supplied dependent-variable scale.
+    Cumulative effects sum these responses. For an integrated model this
+    is not a reconstruction of levels by cumulating stationary responses:
+    the individual responses already incorporate integration. For example,
+    a random walk has unit responses and cumulative effects 1, 2, 3, ... .
     """
 
     table = dynamic_effects(

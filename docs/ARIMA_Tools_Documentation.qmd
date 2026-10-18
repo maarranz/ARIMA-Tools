@@ -80,12 +80,40 @@ y = pd.Series(
     index=pd.date_range("2000-01-01", periods=240, freq="MS"),
     name="y",
 )
+arma_y = y.copy()  # Keep this example for the later stability section.
 result = ARIMA(y, order=(1, 0, 1), trend="n").fit()
 ```
 
-Run the Python blocks below in sequence in the same fresh session. All examples refer to this explicitly defined `y` and `result`. Functions accepting `results` or `result` normally expect a fitted Statsmodels ARIMA result. Exceptions, such as AutoARIMA summaries and plots of recursive tables, are identified below. Tables are pandas objects; plotting functions return Plotly `Figure` objects. In a notebook, display a returned figure or call its `.show()` method.
+Run the Python blocks below in sequence in the same fresh session. The early examples use this `y` and `result`; the intervention example defines its own data and `results`, and the stability example explicitly returns to the original ARMA fit. Functions accepting `results` or `result` normally expect a fitted Statsmodels ARIMA result. Exceptions, such as AutoARIMA summaries and plots of recursive tables, are identified below. Tables are pandas objects; plotting functions return Plotly `Figure` objects. In a notebook, display a returned figure or call its `.show()` method.
 
-## Estimation and parameter diagnostics
+## Model specification and estimation
+
+Statsmodels uses regression with ARIMA errors. For a nonseasonal model,
+
+$$
+y_t=X_t'\beta+u_t,\qquad
+\phi(L)(1-L)^d u_t=\theta(L)\varepsilon_t,
+$$
+
+where $X_t$ includes supplied external regressors and deterministic trend terms,
+$\phi(L)=1-\phi_1L-\cdots-\phi_pL^p$ and
+$\theta(L)=1+\theta_1L+\cdots+\theta_qL^q$. Innovations have zero mean and
+variance $\sigma^2$. Pass the response and regressors on their modeled scale;
+do not manually difference them before fitting a model that already specifies d.
+
+`trend=None` inherits Statsmodels defaults: a constant for d = D = 0 and no
+trend with integration. Here D denotes seasonal differencing, when present.
+For a stationary model without other regressors, `trend="c"` estimates its
+unconditional mean $\mu$. In an AR(1) equation the corresponding intercept is
+$(1-\phi_1)\mu$, not $\mu$. `trend="t"` adds a linear deterministic time path;
+`trend="ct"` adds both a constant and a linear path. With d = 1, a linear level
+trend represents drift (a constant after differencing), while a level constant
+is eliminated by differencing and is not allowed by Statsmodels. More generally,
+trend powers below d + D are not permitted. `trend="n"` supplies no deterministic
+trend. External controls retain their regression interpretation conditional on
+the ARIMA error specification; built-in trends are supplied by Statsmodels.
+
+### Parameter inference
 
 Fit models with Statsmodels `ARIMA(...).fit()`. `at.coefficient_diagnostics()` returns estimates, standard errors, z-statistics, asymptotic p-values, and confidence intervals (`confidence=0.95`). `at.parameter_correlation()` returns the estimated parameter correlation matrix; `include_variance=True` includes `sigma2`. `at.joint_significance()` takes parameter names and returns a joint Wald test against zero.
 
@@ -96,7 +124,23 @@ joint_test = at.joint_significance(result, parameters=["ar.L1", "ma.L1"])
 print(coefficients.round(4))
 ```
 
+In the seeded example, the fitted AR and MA coefficients are approximately
+0.728 and 0.418, close to the generating values 0.7 and 0.4. Sampling variation
+means equality is not expected; the reported intervals quantify approximate
+coefficient uncertainty conditional on this specification. Small displayed
+p-values are rounded values, not probabilities exactly equal to zero.
+
 `confidence` must lie strictly between zero and one. Consult `result.param_names` when specifying joint restrictions. These functions report inference rather than automatic significance classifications.
+
+The joint test has null $H_0:\beta_S=0$ for the selected parameter vector and
+uses $W=\hat\beta_S'\widehat{\operatorname{Var}}(\hat\beta_S)^{-1}\hat\beta_S$.
+Under regularity conditions its reference distribution is asymptotically
+$\chi^2$ with one degree of freedom per independent restriction. A rejection
+concerns the joint restriction, not the importance of every coefficient.
+Coefficient z tests and intervals are also asymptotic and depend on the fitted
+covariance estimate. Large estimated parameter correlations can signal imprecise
+individual estimates or overparameterization; they are not a selection rule.
+
 
 ## Model diagnostics
 
@@ -105,6 +149,14 @@ print(coefficients.round(4))
 `at.root_diagnostics()` tabulates AR/MA roots, moduli, and inverses. `at.is_causal()` and `at.is_invertible()` return booleans; `at.root_summary()` combines the root checks in a Series. Causality refers to the stationary AR component, not the level stationarity of an integrated series.
 
 `at.common_roots()` reports AR–MA pairs within inverse-root distance `tol=0.05`; `exact_tol=1e-10` distinguishes numerically common from near-common pairs. `at.plot_inverse_roots()` returns their interactive plot with the unit circle.
+
+With the polynomial signs defined above, causality requires AR roots outside the
+unit circle; invertibility requires MA roots outside it. Equivalently their
+inverse roots lie inside. Boolean checks use a numerical margin of `1e-10` by
+default. Near-common AR/MA roots suggest possible cancellation and redundant
+parameters, with proximity measured between inverse roots in the complex plane.
+These numerical root checks do not establish overall model adequacy.
+
 
 ```python
 roots = at.root_diagnostics(result)
@@ -128,6 +180,35 @@ normality = at.jarque_bera_test(result)
 residual_plot = at.plot_residual_diagnostics(result, lags=20)
 ```
 
+Residual diagnostics exclude initialization periods (the maximum of likelihood
+burn-in and diffuse periods) and unobserved responses. Lag diagnostics reject
+interior gaps rather than joining observations across them. Jarque–Bera uses the
+remaining finite residuals; its displayed skewness and conventional kurtosis
+reproduce the statistic.
+
+Ljung–Box rejection indicates evidence of remaining serial correlation through
+the requested lag. Non-rejection means insufficient evidence against that null,
+not proof of white noise or model adequacy. Jarque–Bera instead assesses marginal
+normality: normal residuals can still be autocorrelated, and uncorrelated
+residuals need not be normal. Its reference distribution is asymptotic chi-squared
+with two degrees of freedom. Inspect residual plots, sample size and specification
+alongside p-values rather than treating one threshold as a specification rule.
+
+### Innovation dynamics
+
+`at.dynamic_effects()` returns Statsmodels responses of the modeled dependent
+variable to a one-unit innovation, and their cumulative sums, from horizon zero
+through `horizon=20`. `at.plot_dynamic_effects()` plots both. Responses incorporate
+the fitted integration structure. A random walk has a unit response at every
+horizon; summing these gives 1, 2, 3, ... rather than reconstructing its levels
+from stationary responses. An innovation response is not an intervention
+regression contribution or, without additional assumptions, an economic causal effect.
+
+```python
+effects = at.dynamic_effects(result, horizon=12)
+effects_plot = at.plot_dynamic_effects(result, horizon=12)
+```
+
 ## Model comparison and selection
 
 Selection requires identical ordered response values, missing positions and time
@@ -137,6 +218,39 @@ table contains more than one differencing order. Search output is grouped by d.
 including concentrated scale and exact diffuse terms; numerical equality with R
 is not assumed. Rebuild older tables without sample identity metadata.
 
+
+Choose the integration order from the substantive model, time-series evidence
+and appropriate differencing analysis before comparing ARMA orders. Displaying
+criteria for several d values is allowed, but these fits need not share the same
+likelihood basis. `select_model(table, d=1)` restricts the candidate set to d = 1;
+it does not choose d by minimizing criteria across integration orders.
+`order_search()` performs no differencing tests. With `d=None`, `auto_arima()`
+uses StatsForecast's separate unit-root/differencing procedure before its ARMA
+search; it is a benchmark rather than a replacement for that specification work.
+
+### Information criteria
+
+Writing $\ell$ for the reported fitted log likelihood, $N$ for effective
+observations and $k$ for Statsmodels `df_model`,
+
+$$
+\begin{aligned}
+\mathrm{AIC}&=-2\ell+2k,\\
+\mathrm{AICc}&=\mathrm{AIC}+\frac{2k(k+1)}{N-k-1},\\
+\mathrm{BIC}&=-2\ell+k\log N,\\
+\mathrm{HQIC}&=-2\ell+2k\log(\log N).
+\end{aligned}
+$$
+
+AICc is undefined when $N-k-1\leq0$ and is reported as missing; nonfinite
+criterion values are ineligible. Counts include free parameters, concentrated
+innovation scale and exact diffuse state terms where applicable. Effective N
+follows the likelihood burn-in convention and should not be read as a generic
+count of nonmissing observations. Lower values balance fit against complexity
+only among eligible comparable candidates. They do not certify adequacy or
+causality. Recognized non-optimizer fits may be reported and selected, but this
+does not make their estimates maximum likelihood or establish the usual IC
+interpretation for an arbitrary estimator.
 
 ### Initialization and convergence safeguards
 
@@ -190,27 +304,6 @@ automatic = at.auto_arima(y, criterion="BIC", max_p=2, max_q=2)
 automatic_summary = at.auto_arima_summary(automatic)
 ```
 
-Residual diagnostics exclude initialization periods and unobserved responses.
-Lag diagnostics reject interior gaps. Jarque–Bera's displayed moments reproduce
-its statistic. Recursive estimation rejects missing observations, retains failure
-reasons and captured warnings, and plots converged estimates only; a full-sample
-reference requires a valid final-window estimate.
-
-## Dynamic effects and parameter stability
-
-`at.dynamic_effects()` returns the fitted result's Statsmodels impulse responses and their cumulative sums, from horizon zero through `horizon=20`. `at.plot_dynamic_effects()` plots both series. These helpers use the fitted state-space response: in the installed Statsmodels version, a fitted random walk has a unit response at every horizon. They do not manually difference or reintegrate the supplied model.
-
-`at.recursive_estimation()` takes the original series and an `(p, d, q)` order and returns a long-format expanding-window table with estimates, standard errors, intervals, sample endpoints, and convergence status. `initial` can be an observation count, a fraction between zero and one, or `None` (an automatic 10% rule subject to `min_df=20`).
-
-```python
-effects = at.dynamic_effects(result, horizon=12)
-effects_plot = at.plot_dynamic_effects(result, horizon=12)
-recursive = at.recursive_estimation(y, order=(1, 0, 1), initial=220, trend="n")
-stability_plot = at.plot_parameter_stability(recursive, parameters=["ar.L1", "ma.L1"])
-```
-
-`at.plot_parameter_stability()` takes the recursive table. `parameters=None` displays all parameters except `sigma2`; a string or sequence selects parameters explicitly. `reference=True` adds full-sample estimates. An optional `breakpoint` is only a graphical marker and must match the table's endpoint index; it is not a structural-break test.
-
 ## Forecasting
 
 All four functions below accept a fitted **Statsmodels ARIMA result**. `steps=20` is a positive integer, and `level=0.95` is a central normal-theory prediction-interval coverage strictly between zero and one.
@@ -222,17 +315,42 @@ All four functions below accept a fitted **Statsmodels ARIMA result**. `steps=20
 
 ```python
 fev = at.forecast_error_variance(result, steps=20)
-forecast = at.dynamic_forecast(result, steps=20, level=0.95, *, exog=None)
-forecast_plot = at.plot_forecast(result, steps=20, level=0.95, history=50, *, exog=None)
+forecast = at.dynamic_forecast(result, steps=20, level=0.95)
+forecast_plot = at.plot_forecast(result, steps=20, level=0.95, history=50)
 fan_plot = at.plot_fan_chart(result, steps=20, history=50)
 print(forecast.head().round(4))
 ```
+
+For this seeded ARMA fit, the first forecast is about 2.94, with a 95% prediction
+interval of approximately [0.97, 4.91]. At horizon two, variance increases from
+about 1.01 to 2.34. The point forecast moves toward the fitted zero mean while
+uncertainty accumulates; these intervals concern future observations conditional
+on the fitted model, not certainty about its specification. Small numerical
+differences across dependency versions are expected.
 
 The default fan levels are exactly **`(0.50, 0.70, 0.80, 0.90, 0.95, 0.99)`**. Custom levels must be nonempty, distinct, and strictly between zero and one; input order does not matter. In both plots, `history=50` shows the final 50 observations, `history=None` shows the entire sample, and a larger request shows all available observations. Positive integer histories are required otherwise. Supported time indices continue into the forecast; period indices display period-start dates. Unsupported indices use observation positions if Statsmodels can produce the forecast; its forecasting errors propagate.
 
 ```python
 custom_fan = at.plot_fan_chart(result, steps=12, levels=(0.95, 0.50, 0.80), history=None)
 ```
+
+For innovation weights $\psi_j$ of the full fitted ARIMA transfer function,
+including integration, the implemented variance at horizon $h\geq1$ is
+
+$$
+V_h=\hat\sigma^2\sum_{j=0}^{h-1}\psi_j^2,\qquad
+\hat y_{T+h\mid T}\ \pm\ z_{(1+\mathrm{level})/2}\sqrt{V_h}.
+$$
+
+For an AR(1), $\psi_j=\phi^j$, so variance approaches a finite limit when
+$|\phi|<1$. For a random walk, $\psi_j=1$ and $V_h=h\hat\sigma^2$:
+uncertainty grows with the horizon. These are conditional normal-theory prediction
+intervals given the estimated specification, parameters and future regressor
+paths. Their nominal coverage depends on the model and innovation assumptions;
+they are not confidence intervals for the conditional mean alone. Dynamic
+forecasts recurse from the sample endpoint without inserting subsequently
+observed outcomes. Static forecasting and forecast evaluation/comparison belong
+to Forecasting-Tools.
 
 FEV treats fitted parameters and past innovations as known; finite-sample state uncertainty or missing observations can cause differences from Statsmodels' state-space variances. Parameter-estimation uncertainty is not included. Concentrated-scale fits use `result.scale`; other fits use the `sigma2` parameter. Models with external regressors require future values through keyword-only `exog=`. No transformations or evaluation procedures are added by these functions.
 
@@ -421,6 +539,38 @@ is added. Existing missing-history/initialization limitations of innovation-base
 FEV still apply. Static forecasting and forecast evaluation remain the
 responsibility of Forecasting-Tools.
 
+## Recursive estimation and parameter stability
+
+`at.recursive_estimation()` takes the original series and a `(p, d, q)` order and
+returns a long-format expanding-window table with estimates, standard errors,
+intervals, endpoints and convergence status. `initial` is an observation count,
+a fraction between zero and one, or `None` (an automatic 10% rule subject to
+`min_df=20`). Ordinary controls and interventions can be supplied through aligned
+keyword-only `exog=`. The response must be complete and finite. Windows retain
+the same specified columns; unidentified windows remain visible with missing
+estimates and explanatory status rather than silently dropping regressors.
+
+The intervention example above defines a separate `results` object. This stability
+example returns to the earlier ARMA series saved as `arma_y`:
+
+```python
+recursive = at.recursive_estimation(arma_y, order=(1, 0, 1), initial=220, trend="n")
+stability_plot = at.plot_parameter_stability(recursive, parameters=["ar.L1", "ma.L1"])
+```
+
+`at.plot_parameter_stability()` takes the recursive table. `parameters=None`
+displays all parameters except `sigma2`; a string or sequence selects parameters.
+`reference=True` adds full-sample estimates only when the final window is valid.
+Captured warnings and failure reasons remain in the table; nonconverged estimates
+are excluded from the plot. An optional `breakpoint` is only a graphical marker
+matching the endpoint index, not a structural-break test.
+
+Intervals are pointwise, approximate normal intervals, estimate plus/minus the
+normal critical value times its standard error. Expanding windows overlap, so
+successive estimates are dependent; these are not simultaneous confidence bands.
+A changing path can motivate investigation but is not a formal rejection of
+parameter constancy. A visually stable path does not establish constancy either.
+
 ## Compact API summary
 
 Exact public signatures and principal returns are listed below. `results` and `result` are the parameter names actually used by the API; both denote a fitted Statsmodels result unless otherwise specified above. Plot size/title arguments can customize the older diagnostic figures; forecast figures use their built-in layout and can be edited through the returned Plotly object.
@@ -474,12 +624,34 @@ Universidad Carlos III de Madrid (UC3M)\
 Email: [maarranz@eco.uc3m.es](mailto:maarranz@eco.uc3m.es)\
 ORCID: [0000-0002-5951-2284](https://orcid.org/0000-0002-5951-2284)
 
+### Tests and execution scope
+
+From the repository root in the activated environment, run
+`python -m unittest discover -s tests -v`. The examples use simulated data and
+require no downloaded datasets. Figures are returned rather than automatically
+displayed; in Jupyter display the figure or call `.show()`.
+
+The examples were checked in an existing environment with Python 3.14.7,
+Statsmodels 0.15.0 and StatsForecast 2.1.1. The standalone HTML build was checked
+with Quarto 1.10.19. These are tested versions, not additional dependency pins.
+
+This workflow uses a GitHub checkout, not an installed distribution. No packaging
+step is required. Google Colab does not use this local mamba environment: clone
+the repository there, make its root the working directory and provide compatible
+scientific dependencies before importing. A complete Colab setup and fresh
+environment recreation are reserved for Stage 4C; neither is validated here.
+
 ### Rebuilding the HTML
 
-The examples are ordinary Python code blocks, validated in a fresh session rather than executed during rendering. With Quarto installed, the portable standalone build used for this page is:
+The examples are ordinary Python code blocks: execute them separately in a fresh
+session; rendering does not run them. With Quarto installed separately from the
+Python environment, the standalone build command from the repository root is:
 
 ```bash
 quarto pandoc docs/ARIMA_Tools_Documentation.qmd \
   --from markdown --to html5 --standalone --toc --toc-depth=2 \
-  --embed-resources -o docs/index.html
+  --embed-resources --mathml --syntax-highlighting=none -o docs/index.html
 ```
+
+`--mathml` renders equations as native MathML in a modern browser without an
+external mathematics script.

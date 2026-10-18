@@ -90,10 +90,51 @@ def _values(events, start, length):
 def outlier_regressors(y, dates=None, types="AO", delta=0.7, *, positions=None):
     """Build manual AO pulses, LS steps and TC geometric decays as named exog.
 
-    Give exactly one of dates or zero-based positions. Period dates resolve to
-    their containing period; datetime labels match exactly. TC uses one shared
-    delta in (0, 1), default .7. Missing response values never remove rows.
-    Regressors are on the supplied response scale; do not pre-difference them.
+    Parameters
+    ----------
+    y : pandas.Series, pandas.Index or one-dimensional array-like
+        Supplies the original observation grid; response values are not used.
+        Arrays receive a RangeIndex. Index labels must be unique, increasing
+        and nonmissing. Calendar indexes must be regular; DatetimeIndex needs
+        a known or inferable frequency. Missing responses do not remove rows.
+    dates : scalar or sequence of date/period labels, default None
+        Event dates on a calendar index. Period dates resolve to their
+        containing period; datetime dates must match exactly, including
+        timezone. Give exactly one of dates or positions.
+    types : str or sequence of str, default "AO"
+        AO, LS or TC (case-insensitive). A scalar applies to every event;
+        otherwise supply one type per event. Duplicate type/date pairs fail.
+    delta : float, default 0.7
+        Shared TC decay, strictly between zero and one; validated even when
+        no TC is requested. Decay advances per observation, not calendar day.
+    positions : int or sequence of int, optional, keyword-only
+        Zero-based event positions inside the original sample. Use these for
+        numerical indexes; cannot be combined with dates.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Named float columns on the original grid. AO equals one only at the
+        event, LS equals one from the event onward, and TC equals delta**age
+        from age zero onward. All are zero before the event. Version-1 event
+        metadata is stored in attrs['arima_tools_interventions'].
+
+    Warns
+    -----
+    UserWarning
+        Generated columns are linearly dependent in the supplied sample.
+        This builder checks raw event columns, not the full fitted design.
+
+    Notes
+    -----
+    Pass undifferenced columns to Statsmodels ARIMA(exog=...). Coefficients
+    measure a one-observation displacement (AO), sustained level displacement
+    (LS), or initial geometrically decaying displacement (TC) on the supplied
+    response scale. Events and decay are specified, never detected or estimated.
+    Ordinary exogenous controls may be combined with these columns for fitting;
+    retain the original intervention-only frame and metadata for effects,
+    plotting and extension. Full-design identification can depend on trends,
+    integration and missing responses; convergence alone does not establish it.
     """
     index = _index(y)
     decay = _decay(delta)
@@ -215,11 +256,50 @@ def _observed(y, index):
 
 
 def intervention_effects(results, X):
-    """Return Observed, named beta*X contributions, Combined and Adjusted.
+    """Return observed data and fitted intervention regression contributions.
 
-    Adjustment removes intervention regression contributions, not ARIMA errors
-    or ordinary controls/trends. It stays on the modeled scale (including logs).
-    X must be the original intervention frame, not an inferred column prefix.
+    Parameters
+    ----------
+    results : statsmodels ARIMAResults
+        Fitted Statsmodels ARIMA result containing the original interventions
+        as uniquely named external regressors. Ordinary controls and built-in
+        trends may also be present.
+    X : pandas.DataFrame
+        Original intervention-only frame from outlier_regressors(), with its
+        unaltered event metadata, full original index and numerical columns.
+        Do not pass future rows or ordinary exogenous controls as interventions.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Original indexed Observed response, one beta_hat*X contribution per
+        intervention, Combined (their sum) and Adjusted (Observed - Combined).
+        Missing responses retain their original positions. Contributions remain
+        on the modeled scale; no automatic log back-transformation is applied.
+
+    Warns
+    -----
+    UserWarning
+        The supplied fit explicitly failed to converge, or the regression
+        identification diagnostic cannot establish identification. Contributions
+        then remain conditional on the supplied finite fitted coefficients.
+
+    Raises
+    ------
+    ValueError
+        Intervention metadata, fitted columns or samples do not match, a
+        coefficient is unavailable/nonfinite, or the diagnostic establishes
+        non-identification. An inconclusive diagnostic warns rather than rejects.
+
+    Notes
+    -----
+    Adjusted observations are not residuals: ordinary controls, deterministic
+    terms and ARIMA errors are not removed. Identification checks include free
+    regression coefficients and trends; with response gaps they preserve the
+    original integration grid. Unsupported initialization or deficient contrasts
+    under finite approximate-diffuse initialization can be inconclusive.
+    Algebraic identification does not imply precision or economic causality.
+    Coefficient, date and decay uncertainty is not propagated into contributions.
     """
     if not isinstance(getattr(results, "model", None), ARIMA):
         raise TypeError("results must be fitted Statsmodels ARIMA results.")
@@ -260,7 +340,41 @@ def intervention_effects(results, X):
 
 
 def plot_interventions(y, X, *, results=None, individual=False, title="Intervention Effects"):
-    """Plot chosen event dates; with results, plot adjusted data and fitted effects."""
+    """Plot chosen events and, optionally, fitted intervention contributions.
+
+    Parameters
+    ----------
+    y : pandas.Series or one-dimensional array-like
+        Original response on X's observation grid, with missing values allowed.
+        A Series index must match X. With results, values must equal the fitted
+        response, including missing-value positions.
+    X : pandas.DataFrame
+        Complete original intervention-only frame from outlier_regressors(),
+        retaining event metadata. Ordinary controls are not intervention columns.
+    results : statsmodels ARIMAResults or None, default None, keyword-only
+        Without a fit, display observations and chosen event dates. With a fit,
+        obtain numerical contributions through intervention_effects().
+    individual : bool, default False, keyword-only
+        Add individual contribution curves to the effects panel when a fit is
+        supplied. Without results there are no estimated contributions to show.
+    title : str, default "Intervention Effects", keyword-only
+        Figure title.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        Undisplayed interactive figure. Without results there is one panel;
+        with results, the upper panel contains Observed and Adjusted and the
+        lower panel contains Combined and optional individual contributions.
+        Same-date events share one marker and tooltip.
+
+    Notes
+    -----
+    Validation, convergence and identification warnings/errors are inherited from
+    intervention_effects() when results are supplied. Inconclusive identification
+    warns; established non-identification rejects. Adjusted data are not residuals.
+    Event markers and fitted contributions do not establish economic causality.
+    """
     if not isinstance(individual, (bool, np.bool_)):
         raise ValueError("individual must be Boolean.")
     meta = _validated(X)
@@ -312,7 +426,43 @@ def _next_index(index, steps):
 
 
 def extend_interventions(X, steps=20, *, future_index=None):
-    """Return future AO=0, LS=1 and TC decay continued from the original event."""
+    """Continue specified AO, LS and TC regressors into future observations.
+
+    Parameters
+    ----------
+    X : pandas.DataFrame
+        Original intervention-only frame from outlier_regressors(), or a future
+        block previously returned here. Preserve its numerical columns and
+        versioned event metadata. Ordinary controls must be supplied separately.
+    steps : int, default 20
+        Positive number of future rows to generate.
+    future_index : pandas.Index or index-like, default None, keyword-only
+        Next steps labels, unique, increasing and following X. Required when
+        continuation cannot be inferred. If the existing grid has an inferable
+        continuation, supplied labels must equal it. Calendar grids remain regular.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Future rows only, with the same column names/order and updated metadata.
+        AO stays zero, LS stays one, and TC continues delta**age from the original
+        event; decay does not restart at the forecast origin. The input is unchanged.
+
+    Raises
+    ------
+    ValueError
+        Metadata/values are inconsistent, steps is invalid, or future labels
+        cannot be inferred or do not continue the existing observation grid.
+
+    Notes
+    -----
+    PeriodIndex, regular DatetimeIndex, RangeIndex and equally spaced numerical
+    indexes can continue automatically. Chaining future blocks preserves event age.
+    This function continues existing specified events; it does not introduce new
+    future events or estimate event dates or decay. It does not assess fitted-model
+    identification. Supply all future ordinary controls as well as interventions
+    when forecasting. Forecasts condition on those specified future regressor paths.
+    """
     steps = _count(steps, 'steps')
     meta = _validated(X)
     expected = _next_index(X.index, steps)
