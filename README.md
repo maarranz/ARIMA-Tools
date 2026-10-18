@@ -39,10 +39,34 @@ scientific Python, Statsmodels, StatsForecast, Plotly and Jupyter dependencies.
 Run Python or Jupyter from this root so the local `arima_tools` directory is
 importable; no package-install or PyPI step is required.
 
-This is the GitHub-based workflow. Fresh environment recreation and a complete
-Google Colab setup are reserved for Stage 4C. The current dependency file is not
-a version lock; successful examples in an existing environment do not establish
-clean-environment compatibility.
+The GitHub checkout and a fresh environment created from this file were validated.
+The dependency file is not a version lock; future dependency updates may require
+compatibility checks.
+
+## Google Colab
+
+Open a notebook in [Google Colab](https://colab.research.google.com/) and run this
+setup cell, taken from the successful hosted validation notebook:
+
+```python
+import sys, subprocess, importlib.util
+from pathlib import Path
+
+checkout = Path('/content/arima_stage4c')
+if not checkout.exists():
+    subprocess.run(['git', 'clone', 'https://github.com/maarranz/ARIMA-Tools.git', str(checkout)], check=True)
+if importlib.util.find_spec('statsforecast') is None:
+    subprocess.run([sys.executable, '-m', 'pip', 'install', 'statsforecast'], check=True)
+%cd /content/arima_stage4c
+import arima_tools as at
+```
+
+Then run your notebook cells, including the short example below. Colab supplies
+the other scientific dependencies used in the tested runtime; only `statsforecast`
+is installed above if missing. No mamba environment or package-install step for
+ARIMA-Tools itself is needed in Colab. Estimation, diagnostics, dynamic forecasts
+and Plotly display passed the hosted check, which printed
+`COLAB ESTIMATION, DIAGNOSTICS AND FORECAST CHECKS PASSED`.
 
 ## Short example
 

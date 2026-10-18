@@ -26,7 +26,7 @@ from scipy.stats import chi2, norm, jarque_bera, skew, kurtosis
 from statsforecast.models import AutoARIMA
 from statsforecast.arima import arima_string
 
-__version__ = "0.2.0"
+__version__ = "1.0.0"
 
 __all__ = [
     "outlier_regressors",

@@ -1,159 +1,16 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="generator" content="pandoc 3.10" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <meta name="author" content="Miguel A. Arranz, PhD" />
-  <title>ARIMA-Tools: Public API</title>
-  <style>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
-html {
-color: #1a1a1a;
-background-color: #fdfdfd;
-}
-body {
-margin: 0 auto;
-max-width: 36em;
-padding-left: 50px;
-padding-right: 50px;
-padding-top: 50px;
-padding-bottom: 50px;
-hyphens: auto;
-overflow-wrap: break-word;
-text-rendering: optimizeLegibility;
-font-kerning: normal;
-}
-@media (max-width: 600px) {
-body {
-font-size: 0.9em;
-padding: 12px;
-}
-h1 {
-font-size: 1.8em;
-}
-}
-@media print {
-html {
-background-color: white;
-}
-body {
-background-color: transparent;
-color: black;
-font-size: 12pt;
-}
-p, h2, h3 {
-orphans: 3;
-widows: 3;
-}
-h2, h3, h4 {
-page-break-after: avoid;
-}
-}
-p {
-margin: 1em 0;
-}
-a {
-color: #1a1a1a;
-}
-a:visited {
-color: #1a1a1a;
-}
-img {
-max-width: 100%;
-}
-svg {
-height: auto;
-max-width: 100%;
-}
-h1, h2, h3, h4, h5, h6 {
-margin-top: 1.4em;
-}
-h5, h6 {
-font-size: 1em;
-font-style: italic;
-}
-h6 {
-font-weight: normal;
-}
-ol, ul {
-padding-left: 1.7em;
-margin-top: 1em;
-}
-li > ol, li > ul {
-margin-top: 0;
-}
-blockquote {
-margin: 1em 0 1em 1.7em;
-padding-left: 1em;
-border-left: 2px solid #e6e6e6;
-color: #606060;
-}
-code {
-white-space: pre-wrap;
-font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
-font-size: 85%;
-margin: 0;
-hyphens: manual;
-}
-pre {
-margin: 1em 0;
-overflow: auto;
-}
-pre code {
-padding: 0;
-overflow: visible;
-overflow-wrap: normal;
-}
-.sourceCode {
-background-color: transparent;
-overflow: visible;
-}
-hr {
-border: none;
-border-top: 1px solid #1a1a1a;
-height: 1px;
-margin: 1em 0;
-}
-table {
-margin: 1em 0;
-border-collapse: collapse;
-width: 100%;
-overflow-x: auto;
-display: block;
-font-variant-numeric: lining-nums tabular-nums;
-}
-table caption {
-margin-bottom: 0.75em;
-}
-tbody {
-margin-top: 0.5em;
-border-top: 1px solid #1a1a1a;
-border-bottom: 1px solid #1a1a1a;
-}
-th {
-border-top: 1px solid #1a1a1a;
-padding: 0.25em 0.5em 0.25em 0.5em;
-}
-td {
-padding: 0.125em 0.5em 0.25em 0.5em;
-}
-header {
-margin-bottom: 4em;
-text-align: center;
-}
-#TOC li {
-list-style: none;
-}
-#TOC ul {
-padding-left: 1.3em;
-}
-#TOC > ul {
-padding-left: 0;
-}
-#TOC a:not(:hover) {
-text-decoration: none;
-}
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Miguel A. Arranz, PhD">
+
+<title>ARIMA-Tools: Public API</title>
+<style>
+
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: 1.5em;}
 div.column{flex: auto;}
@@ -162,16 +19,51 @@ div.columns{gap: min(4vw, 1.5em);}
 div.column{overflow-x: auto;}
 }
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-
-ul.task-list[class]{list-style: none;}
+ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
-font-size: inherit;
 width: 0.8em;
-margin: 0 0.8em 0.2em -1.6em;
-vertical-align: middle;
+margin: 0 0.8em 0.2em -1em;  vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
-  <style>
+
+
+<style>
 html { scroll-behavior: smooth; }
 body { max-width: 980px; margin: 48px auto; padding: 0 24px; color: #263442;
 font: 16px/1.6 system-ui, sans-serif; }
@@ -192,879 +84,408 @@ table code { white-space: normal; overflow-wrap: anywhere; }
 table { font-size: .76rem; } th,td { padding: 8px; } }
 table { font-size: 0.88rem; }
 </style>
+
+
 </head>
+
 <body>
+
+
 <header id="title-block-header">
 <h1 class="title">ARIMA-Tools: Public API</h1>
-<p class="subtitle">Software reference for Applied Time Series
-Econometrics (ATSE)</p>
+<p class="subtitle">Software reference for Applied Time Series Econometrics (ATSE)</p>
 <p class="author">Miguel A. Arranz, PhD</p>
+
 </header>
+
 <nav id="TOC" role="doc-toc">
-<ul>
-<li><a href="#overview-and-purpose" id="toc-overview-and-purpose">Overview and purpose</a></li>
-<li><a href="#installation-environment-and-import" id="toc-installation-environment-and-import">Installation, environment,
-and import</a></li>
-<li><a href="#model-specification-and-estimation" id="toc-model-specification-and-estimation">Model specification and
-estimation</a></li>
-<li><a href="#model-diagnostics" id="toc-model-diagnostics">Model
-diagnostics</a></li>
-<li><a href="#model-comparison-and-selection" id="toc-model-comparison-and-selection">Model comparison and
-selection</a></li>
-<li><a href="#forecasting" id="toc-forecasting">Forecasting</a></li>
-<li><a href="#manual-intervention-modelling" id="toc-manual-intervention-modelling">Manual intervention
-modelling</a></li>
-<li><a href="#recursive-estimation-and-parameter-stability" id="toc-recursive-estimation-and-parameter-stability">Recursive
-estimation and parameter stability</a></li>
-<li><a href="#compact-api-summary" id="toc-compact-api-summary">Compact
-API summary</a></li>
-<li><a href="#course-resources-and-author" id="toc-course-resources-and-author">Course, resources, and
-author</a></li>
-</ul>
+    <h2 id="toc-title">Table of contents</h2>
+
+  <ul>
+  <li><a href="#overview-and-purpose" id="toc-overview-and-purpose">Overview and purpose</a></li>
+  <li><a href="#installation-environment-and-import" id="toc-installation-environment-and-import">Installation, environment, and import</a></li>
+  <li><a href="#model-specification-and-estimation" id="toc-model-specification-and-estimation">Model specification and estimation</a></li>
+  <li><a href="#model-diagnostics" id="toc-model-diagnostics">Model diagnostics</a></li>
+  <li><a href="#model-comparison-and-selection" id="toc-model-comparison-and-selection">Model comparison and selection</a></li>
+  <li><a href="#forecasting" id="toc-forecasting">Forecasting</a></li>
+  <li><a href="#manual-intervention-modelling" id="toc-manual-intervention-modelling">Manual intervention modelling</a></li>
+  <li><a href="#recursive-estimation-and-parameter-stability" id="toc-recursive-estimation-and-parameter-stability">Recursive estimation and parameter stability</a></li>
+  <li><a href="#compact-api-summary" id="toc-compact-api-summary">Compact API summary</a></li>
+  <li><a href="#course-resources-and-author" id="toc-course-resources-and-author">Course, resources, and author</a></li>
+  </ul>
 </nav>
 <h2 id="overview-and-purpose">Overview and purpose</h2>
-<p>ARIMA-Tools was developed for the <strong>Applied Time Series
-Econometrics (ATSE)</strong> course at <strong>Universidad Carlos III de
-Madrid</strong>. It complements Statsmodels and StatsForecast with
-teaching-oriented tables, summaries, numerical forecasts, and
-interactive Plotly figures.</p>
-<p>This document describes the software/API. The ATSE course material
-provides the econometric theory; the Labs provide fuller worked examples
-and exercises. The package currently exposes <strong>30 public
-functions</strong> through a deliberately flat API: use
-<code>import arima_tools as at</code> and call
-<code>at.function(...)</code>. Internal modules organize the
-implementation; users do not need submodule imports.</p>
-<p>Diagnostics have three layers: parameters and model structure,
-residual behavior, and model behavior (dynamics and parameter
-stability). These concepts overlap the implementation modules.</p>
-<h2 id="installation-environment-and-import">Installation, environment,
-and import</h2>
-<p>From the repository root, recreate the environment only if
-needed:</p>
-<pre class="bash"><code>mamba env create -f environment.yml
-mamba activate atse_arma_tools</code></pre>
-<p>If it already exists, activate it without recreating it. <a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">environment.yml</a>
-specifies Python 3.14 and the required packages. Run Python or
-JupyterLab from the repository root so the local package is importable;
-no package-install command is currently provided.</p>
-<pre class="python"><code>import numpy as np
-import pandas as pd
-from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.tsa.arima_process import ArmaProcess
-import arima_tools as at</code></pre>
+<p>ARIMA-Tools was developed for the <strong>Applied Time Series Econometrics (ATSE)</strong> course at <strong>Universidad Carlos III de Madrid</strong>. It complements Statsmodels and StatsForecast with teaching-oriented tables, summaries, numerical forecasts, and interactive Plotly figures.</p>
+<p>This document describes the software/API. The ATSE course material provides the econometric theory; the Labs provide fuller worked examples and exercises. The package currently exposes <strong>30 public functions</strong> through a deliberately flat API: use <code>import arima_tools as at</code> and call <code>at.function(...)</code>. Internal modules organize the implementation; users do not need submodule imports.</p>
+<p>Diagnostics have three layers: parameters and model structure, residual behavior, and model behavior (dynamics and parameter stability). These concepts overlap the implementation modules.</p>
+<h2 id="installation-environment-and-import">Installation, environment, and import</h2>
+<p>From the repository root, recreate the environment only if needed:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> env create <span class="at">-f</span> environment.yml</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> activate atse_arma_tools</span></code></pre></div>
+<p>If it already exists, activate it without recreating it. <a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">environment.yml</a> specifies Python 3.14 and the required packages. Run Python or JupyterLab from the repository root so the local package is importable; no package-install command is currently provided.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima.model <span class="im">import</span> ARIMA</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima_process <span class="im">import</span> ArmaProcess</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> arima_tools <span class="im">as</span> at</span></code></pre></div>
 <h3 id="small-example-used-below">Small example used below</h3>
-<p>The explicit data-generating process is a zero-mean ARMA(1,1):
-<code>y[t] = 0.7*y[t-1] + eps[t] + 0.4*eps[t-1]</code>, with independent
-standard-normal innovations (variance 1). The fixed seed,
-100-observation burn-in, and 240 retained observations keep the example
-reproducible and small. Monthly dates are illustrative labels for this
-simulated series.</p>
-<pre class="python"><code>rng = np.random.default_rng(12345)
-process = ArmaProcess(ar=[1, -0.7], ma=[1, 0.4])
-y = pd.Series(
-    process.generate_sample(nsample=240, burnin=100, distrvs=rng.standard_normal),
-    index=pd.date_range(&quot;2000-01-01&quot;, periods=240, freq=&quot;MS&quot;),
-    name=&quot;y&quot;,
-)
-arma_y = y.copy()  # Keep this example for the later stability section.
-result = ARIMA(y, order=(1, 0, 1), trend=&quot;n&quot;).fit()</code></pre>
-<p>Run the Python blocks below in sequence in the same fresh session.
-The early examples use this <code>y</code> and <code>result</code>; the
-intervention example defines its own data and <code>results</code>, and
-the stability example explicitly returns to the original ARMA fit.
-Functions accepting <code>results</code> or <code>result</code> normally
-expect a fitted Statsmodels ARIMA result. Exceptions, such as AutoARIMA
-summaries and plots of recursive tables, are identified below. Tables
-are pandas objects; plotting functions return Plotly <code>Figure</code>
-objects. In a notebook, display a returned figure or call its
-<code>.show()</code> method.</p>
-<h2 id="model-specification-and-estimation">Model specification and
-estimation</h2>
-<p>Statsmodels uses regression with ARIMA errors. For a nonseasonal
-model,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>t</mi></msub><mo>=</mo><msubsup><mi>X</mi><mi>t</mi><mo>′</mo></msubsup><mi>β</mi><mo>+</mo><msub><mi>u</mi><mi>t</mi></msub><mo>,</mo><mspace width="2.0em"></mspace><mi>ϕ</mi><mo stretchy="false" form="prefix">(</mo><mi>L</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><mi>L</mi><msup><mo stretchy="false" form="postfix">)</mo><mi>d</mi></msup><msub><mi>u</mi><mi>t</mi></msub><mo>=</mo><mi>θ</mi><mo stretchy="false" form="prefix">(</mo><mi>L</mi><mo stretchy="false" form="postfix">)</mo><msub><mi>ε</mi><mi>t</mi></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
-y_t=X_t&#39;\beta+u_t,\qquad
-\phi(L)(1-L)^d u_t=\theta(L)\varepsilon_t,
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>X</mi><mi>t</mi></msub><annotation encoding="application/x-tex">X_t</annotation></semantics></math>
-includes supplied external regressors and deterministic trend terms,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϕ</mi><mo stretchy="false" form="prefix">(</mo><mi>L</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>1</mn><mo>−</mo><msub><mi>ϕ</mi><mn>1</mn></msub><mi>L</mi><mo>−</mo><mi>⋯</mi><mo>−</mo><msub><mi>ϕ</mi><mi>p</mi></msub><msup><mi>L</mi><mi>p</mi></msup></mrow><annotation encoding="application/x-tex">\phi(L)=1-\phi_1L-\cdots-\phi_pL^p</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>θ</mi><mo stretchy="false" form="prefix">(</mo><mi>L</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>1</mn><mo>+</mo><msub><mi>θ</mi><mn>1</mn></msub><mi>L</mi><mo>+</mo><mi>⋯</mi><mo>+</mo><msub><mi>θ</mi><mi>q</mi></msub><msup><mi>L</mi><mi>q</mi></msup></mrow><annotation encoding="application/x-tex">\theta(L)=1+\theta_1L+\cdots+\theta_qL^q</annotation></semantics></math>.
-Innovations have zero mean and variance
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>σ</mi><mn>2</mn></msup><annotation encoding="application/x-tex">\sigma^2</annotation></semantics></math>.
-Pass the response and regressors on their modeled scale; do not manually
-difference them before fitting a model that already specifies d.</p>
-<p><code>trend=None</code> inherits Statsmodels defaults: a constant for
-d = D = 0 and no trend with integration. Here D denotes seasonal
-differencing, when present. For a stationary model without other
-regressors, <code>trend=&quot;c&quot;</code> estimates its unconditional mean
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>.
-In an AR(1) equation the corresponding intercept is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>−</mo><msub><mi>ϕ</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo><mi>μ</mi></mrow><annotation encoding="application/x-tex">(1-\phi_1)\mu</annotation></semantics></math>,
-not
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>μ</mi><annotation encoding="application/x-tex">\mu</annotation></semantics></math>.
-<code>trend=&quot;t&quot;</code> adds a linear deterministic time path;
-<code>trend=&quot;ct&quot;</code> adds both a constant and a linear path. With d =
-1, a linear level trend represents drift (a constant after
-differencing), while a level constant is eliminated by differencing and
-is not allowed by Statsmodels. More generally, trend powers below d + D
-are not permitted. <code>trend=&quot;n&quot;</code> supplies no deterministic
-trend. External controls retain their regression interpretation
-conditional on the ARIMA error specification; built-in trends are
-supplied by Statsmodels.</p>
+<p>The explicit data-generating process is a zero-mean ARMA(1,1): <code>y[t] = 0.7*y[t-1] + eps[t] + 0.4*eps[t-1]</code>, with independent standard-normal innovations (variance 1). The fixed seed, 100-observation burn-in, and 240 retained observations keep the example reproducible and small. Monthly dates are illustrative labels for this simulated series.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">12345</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>process <span class="op">=</span> ArmaProcess(ar<span class="op">=</span>[<span class="dv">1</span>, <span class="op">-</span><span class="fl">0.7</span>], ma<span class="op">=</span>[<span class="dv">1</span>, <span class="fl">0.4</span>])</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> pd.Series(</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    process.generate_sample(nsample<span class="op">=</span><span class="dv">240</span>, burnin<span class="op">=</span><span class="dv">100</span>, distrvs<span class="op">=</span>rng.standard_normal),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>pd.date_range(<span class="st">&quot;2000-01-01&quot;</span>, periods<span class="op">=</span><span class="dv">240</span>, freq<span class="op">=</span><span class="st">&quot;MS&quot;</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">&quot;y&quot;</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>arma_y <span class="op">=</span> y.copy()  <span class="co"># Keep this example for the later stability section.</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> ARIMA(y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>), trend<span class="op">=</span><span class="st">&quot;n&quot;</span>).fit()</span></code></pre></div>
+<p>Run the Python blocks below in sequence in the same fresh session. The early examples use this <code>y</code> and <code>result</code>; the intervention example defines its own data and <code>results</code>, and the stability example explicitly returns to the original ARMA fit. Functions accepting <code>results</code> or <code>result</code> normally expect a fitted Statsmodels ARIMA result. Exceptions, such as AutoARIMA summaries and plots of recursive tables, are identified below. Tables are pandas objects; plotting functions return Plotly <code>Figure</code> objects. In a notebook, display a returned figure or call its <code>.show()</code> method.</p>
+<h2 id="model-specification-and-estimation">Model specification and estimation</h2>
+<p>Statsmodels uses regression with ARIMA errors. For a nonseasonal model,</p>
+<p><span class="math display"><em>y</em><sub><em>t</em></sub> = <em>X</em><sub><em>t</em></sub><sup>′</sup><em>β</em> + <em>u</em><sub><em>t</em></sub>,   <em>ϕ</em>(<em>L</em>)(1 − <em>L</em>)<sup><em>d</em></sup><em>u</em><sub><em>t</em></sub> = <em>θ</em>(<em>L</em>)<em>ε</em><sub><em>t</em></sub>,</span></p>
+<p>where <span class="math inline"><em>X</em><sub><em>t</em></sub></span> includes supplied external regressors and deterministic trend terms, <span class="math inline"><em>ϕ</em>(<em>L</em>) = 1 − <em>ϕ</em><sub>1</sub><em>L</em> − ⋯ − <em>ϕ</em><sub><em>p</em></sub><em>L</em><sup><em>p</em></sup></span> and <span class="math inline"><em>θ</em>(<em>L</em>) = 1 + <em>θ</em><sub>1</sub><em>L</em> + ⋯ + <em>θ</em><sub><em>q</em></sub><em>L</em><sup><em>q</em></sup></span>. Innovations have zero mean and variance <span class="math inline"><em>σ</em><sup>2</sup></span>. Pass the response and regressors on their modeled scale; do not manually difference them before fitting a model that already specifies d.</p>
+<p><code>trend=None</code> inherits Statsmodels defaults: a constant for d = D = 0 and no trend with integration. Here D denotes seasonal differencing, when present. For a stationary model without other regressors, <code>trend=&quot;c&quot;</code> estimates its unconditional mean <span class="math inline"><em>μ</em></span>. In an AR(1) equation the corresponding intercept is <span class="math inline">(1 − <em>ϕ</em><sub>1</sub>)<em>μ</em></span>, not <span class="math inline"><em>μ</em></span>. <code>trend=&quot;t&quot;</code> adds a linear deterministic time path; <code>trend=&quot;ct&quot;</code> adds both a constant and a linear path. With d = 1, a linear level trend represents drift (a constant after differencing), while a level constant is eliminated by differencing and is not allowed by Statsmodels. More generally, trend powers below d + D are not permitted. <code>trend=&quot;n&quot;</code> supplies no deterministic trend. External controls retain their regression interpretation conditional on the ARIMA error specification; built-in trends are supplied by Statsmodels.</p>
 <h3 id="parameter-inference">Parameter inference</h3>
-<p>Fit models with Statsmodels <code>ARIMA(...).fit()</code>.
-<code>at.coefficient_diagnostics()</code> returns estimates, standard
-errors, z-statistics, asymptotic p-values, and confidence intervals
-(<code>confidence=0.95</code>). <code>at.parameter_correlation()</code>
-returns the estimated parameter correlation matrix;
-<code>include_variance=True</code> includes <code>sigma2</code>.
-<code>at.joint_significance()</code> takes parameter names and returns a
-joint Wald test against zero.</p>
-<pre class="python"><code>coefficients = at.coefficient_diagnostics(result)
-correlations = at.parameter_correlation(result, include_variance=True)
-joint_test = at.joint_significance(result, parameters=[&quot;ar.L1&quot;, &quot;ma.L1&quot;])
-print(coefficients.round(4))</code></pre>
-<p>In the seeded example, the fitted AR and MA coefficients are
-approximately 0.728 and 0.418, close to the generating values 0.7 and
-0.4. Sampling variation means equality is not expected; the reported
-intervals quantify approximate coefficient uncertainty conditional on
-this specification. Small displayed p-values are rounded values, not
-probabilities exactly equal to zero.</p>
-<p><code>confidence</code> must lie strictly between zero and one.
-Consult <code>result.param_names</code> when specifying joint
-restrictions. These functions report inference rather than automatic
-significance classifications.</p>
-<p>The joint test has null
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mn>0</mn></msub><mo>:</mo><msub><mi>β</mi><mi>S</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">H_0:\beta_S=0</annotation></semantics></math>
-for the selected parameter vector and uses
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mo>=</mo><msubsup><mover><mi>β</mi><mo accent="true">̂</mo></mover><mi>S</mi><mo>′</mo></msubsup><mover><mi mathvariant="normal">Var</mi><mo accent="true">̂</mo></mover><mo stretchy="false" form="prefix">(</mo><msub><mover><mi>β</mi><mo accent="true">̂</mo></mover><mi>S</mi></msub><msup><mo stretchy="false" form="postfix">)</mo><mrow><mi>−</mi><mn>1</mn></mrow></msup><msub><mover><mi>β</mi><mo accent="true">̂</mo></mover><mi>S</mi></msub></mrow><annotation encoding="application/x-tex">W=\hat\beta_S&#39;\widehat{\operatorname{Var}}(\hat\beta_S)^{-1}\hat\beta_S</annotation></semantics></math>.
-Under regularity conditions its reference distribution is asymptotically
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>χ</mi><mn>2</mn></msup><annotation encoding="application/x-tex">\chi^2</annotation></semantics></math>
-with one degree of freedom per independent restriction. A rejection
-concerns the joint restriction, not the importance of every coefficient.
-Coefficient z tests and intervals are also asymptotic and depend on the
-fitted covariance estimate. Large estimated parameter correlations can
-signal imprecise individual estimates or overparameterization; they are
-not a selection rule.</p>
+<p>Fit models with Statsmodels <code>ARIMA(...).fit()</code>. <code>at.coefficient_diagnostics()</code> returns estimates, standard errors, z-statistics, asymptotic p-values, and confidence intervals (<code>confidence=0.95</code>). <code>at.parameter_correlation()</code> returns the estimated parameter correlation matrix; <code>include_variance=True</code> includes <code>sigma2</code>. <code>at.joint_significance()</code> takes parameter names and returns a joint Wald test against zero.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>coefficients <span class="op">=</span> at.coefficient_diagnostics(result)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>correlations <span class="op">=</span> at.parameter_correlation(result, include_variance<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>joint_test <span class="op">=</span> at.joint_significance(result, parameters<span class="op">=</span>[<span class="st">&quot;ar.L1&quot;</span>, <span class="st">&quot;ma.L1&quot;</span>])</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(coefficients.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div>
+<p>In the seeded example, the fitted AR and MA coefficients are approximately 0.728 and 0.418, close to the generating values 0.7 and 0.4. Sampling variation means equality is not expected; the reported intervals quantify approximate coefficient uncertainty conditional on this specification. Small displayed p-values are rounded values, not probabilities exactly equal to zero.</p>
+<p><code>confidence</code> must lie strictly between zero and one. Consult <code>result.param_names</code> when specifying joint restrictions. These functions report inference rather than automatic significance classifications.</p>
+<p>The joint test has null <span class="math inline"><em>H</em><sub>0</sub> : <em>β</em><sub><em>S</em></sub> = 0</span> for the selected parameter vector and uses <span class="math inline">$W=\hat\beta_S&#39;\widehat{\operatorname{Var}}(\hat\beta_S)^{-1}\hat\beta_S$</span>. Under regularity conditions its reference distribution is asymptotically <span class="math inline"><em>χ</em><sup>2</sup></span> with one degree of freedom per independent restriction. A rejection concerns the joint restriction, not the importance of every coefficient. Coefficient z tests and intervals are also asymptotic and depend on the fitted covariance estimate. Large estimated parameter correlations can signal imprecise individual estimates or overparameterization; they are not a selection rule.</p>
 <h2 id="model-diagnostics">Model diagnostics</h2>
-<h3 id="parameters-and-model-structure">Parameters and model
-structure</h3>
-<p><code>at.root_diagnostics()</code> tabulates AR/MA roots, moduli, and
-inverses. <code>at.is_causal()</code> and
-<code>at.is_invertible()</code> return booleans;
-<code>at.root_summary()</code> combines the root checks in a Series.
-Causality refers to the stationary AR component, not the level
-stationarity of an integrated series.</p>
-<p><code>at.common_roots()</code> reports AR–MA pairs within
-inverse-root distance <code>tol=0.05</code>;
-<code>exact_tol=1e-10</code> distinguishes numerically common from
-near-common pairs. <code>at.plot_inverse_roots()</code> returns their
-interactive plot with the unit circle.</p>
-<p>With the polynomial signs defined above, causality requires AR roots
-outside the unit circle; invertibility requires MA roots outside it.
-Equivalently their inverse roots lie inside. Boolean checks use a
-numerical margin of <code>1e-10</code> by default. Near-common AR/MA
-roots suggest possible cancellation and redundant parameters, with
-proximity measured between inverse roots in the complex plane. These
-numerical root checks do not establish overall model adequacy.</p>
-<pre class="python"><code>roots = at.root_diagnostics(result)
-causal = at.is_causal(result)
-invertible = at.is_invertible(result)
-common = at.common_roots(result)
-root_checks = at.root_summary(result)
-root_plot = at.plot_inverse_roots(result)</code></pre>
+<h3 id="parameters-and-model-structure">Parameters and model structure</h3>
+<p><code>at.root_diagnostics()</code> tabulates AR/MA roots, moduli, and inverses. <code>at.is_causal()</code> and <code>at.is_invertible()</code> return booleans; <code>at.root_summary()</code> combines the root checks in a Series. Causality refers to the stationary AR component, not the level stationarity of an integrated series.</p>
+<p><code>at.common_roots()</code> reports AR–MA pairs within inverse-root distance <code>tol=0.05</code>; <code>exact_tol=1e-10</code> distinguishes numerically common from near-common pairs. <code>at.plot_inverse_roots()</code> returns their interactive plot with the unit circle.</p>
+<p>With the polynomial signs defined above, causality requires AR roots outside the unit circle; invertibility requires MA roots outside it. Equivalently their inverse roots lie inside. Boolean checks use a numerical margin of <code>1e-10</code> by default. Near-common AR/MA roots suggest possible cancellation and redundant parameters, with proximity measured between inverse roots in the complex plane. These numerical root checks do not establish overall model adequacy.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>roots <span class="op">=</span> at.root_diagnostics(result)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>causal <span class="op">=</span> at.is_causal(result)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>invertible <span class="op">=</span> at.is_invertible(result)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>common <span class="op">=</span> at.common_roots(result)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>root_checks <span class="op">=</span> at.root_summary(result)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>root_plot <span class="op">=</span> at.plot_inverse_roots(result)</span></code></pre></div>
 <h3 id="residual-behavior">Residual behavior</h3>
-<p><code>at.ljung_box_test()</code> requires a lag or sequence of lags
-greater than the ordinary plus seasonal AR/MA coefficient count, and
-reports adjusted degrees of freedom and p-values.
-<code>at.residual_correlations()</code> returns residual ACF/PACF values
-and approximate individual white-noise bounds; these bounds are not a
-joint test. Its maximum lag is <code>floor(T / 2)</code>, where T is the
-usable residual sample size.</p>
-<p><code>at.jarque_bera_test()</code> returns the normality statistic,
-p-value, skewness, and conventional kurtosis.
-<code>at.plot_residual_diagnostics()</code> combines residuals, ACF,
-PACF, and valid-lag Ljung–Box p-values in a four-panel figure.</p>
-<pre class="python"><code>ljung_box = at.ljung_box_test(result, lags=[5, 10, 20])
-residual_acf_pacf = at.residual_correlations(result, lags=20)
-normality = at.jarque_bera_test(result)
-residual_plot = at.plot_residual_diagnostics(result, lags=20)</code></pre>
-<p>Residual diagnostics exclude initialization periods (the maximum of
-likelihood burn-in and diffuse periods) and unobserved responses. Lag
-diagnostics reject interior gaps rather than joining observations across
-them. Jarque–Bera uses the remaining finite residuals; its displayed
-skewness and conventional kurtosis reproduce the statistic.</p>
-<p>Ljung–Box rejection indicates evidence of remaining serial
-correlation through the requested lag. Non-rejection means insufficient
-evidence against that null, not proof of white noise or model adequacy.
-Jarque–Bera instead assesses marginal normality: normal residuals can
-still be autocorrelated, and uncorrelated residuals need not be normal.
-Its reference distribution is asymptotic chi-squared with two degrees of
-freedom. Inspect residual plots, sample size and specification alongside
-p-values rather than treating one threshold as a specification rule.</p>
+<p><code>at.ljung_box_test()</code> requires a lag or sequence of lags greater than the ordinary plus seasonal AR/MA coefficient count, and reports adjusted degrees of freedom and p-values. <code>at.residual_correlations()</code> returns residual ACF/PACF values and approximate individual white-noise bounds; these bounds are not a joint test. Its maximum lag is <code>floor(T / 2)</code>, where T is the usable residual sample size.</p>
+<p><code>at.jarque_bera_test()</code> returns the normality statistic, p-value, skewness, and conventional kurtosis. <code>at.plot_residual_diagnostics()</code> combines residuals, ACF, PACF, and valid-lag Ljung–Box p-values in a four-panel figure.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ljung_box <span class="op">=</span> at.ljung_box_test(result, lags<span class="op">=</span>[<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>])</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>residual_acf_pacf <span class="op">=</span> at.residual_correlations(result, lags<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>normality <span class="op">=</span> at.jarque_bera_test(result)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>residual_plot <span class="op">=</span> at.plot_residual_diagnostics(result, lags<span class="op">=</span><span class="dv">20</span>)</span></code></pre></div>
+<p>Residual diagnostics exclude initialization periods (the maximum of likelihood burn-in and diffuse periods) and unobserved responses. Lag diagnostics reject interior gaps rather than joining observations across them. Jarque–Bera uses the remaining finite residuals; its displayed skewness and conventional kurtosis reproduce the statistic.</p>
+<p>Ljung–Box rejection indicates evidence of remaining serial correlation through the requested lag. Non-rejection means insufficient evidence against that null, not proof of white noise or model adequacy. Jarque–Bera instead assesses marginal normality: normal residuals can still be autocorrelated, and uncorrelated residuals need not be normal. Its reference distribution is asymptotic chi-squared with two degrees of freedom. Inspect residual plots, sample size and specification alongside p-values rather than treating one threshold as a specification rule.</p>
 <h3 id="innovation-dynamics">Innovation dynamics</h3>
-<p><code>at.dynamic_effects()</code> returns Statsmodels responses of
-the modeled dependent variable to a one-unit innovation, and their
-cumulative sums, from horizon zero through <code>horizon=20</code>.
-<code>at.plot_dynamic_effects()</code> plots both. Responses incorporate
-the fitted integration structure. A random walk has a unit response at
-every horizon; summing these gives 1, 2, 3, … rather than reconstructing
-its levels from stationary responses. An innovation response is not an
-intervention regression contribution or, without additional assumptions,
-an economic causal effect.</p>
-<pre class="python"><code>effects = at.dynamic_effects(result, horizon=12)
-effects_plot = at.plot_dynamic_effects(result, horizon=12)</code></pre>
-<h2 id="model-comparison-and-selection">Model comparison and
-selection</h2>
-<p>Selection requires identical ordered response values, missing
-positions and time indexes, effective sample size and initialization
-metadata. Supply <code>d=</code> when a table contains more than one
-differencing order. Search output is grouped by d. <code>N</code> and
-parameter counts follow Statsmodels <code>nobs_effective</code> and
-<code>df_model</code>, including concentrated scale and exact diffuse
-terms; numerical equality with R is not assumed. Rebuild older tables
-without sample identity metadata.</p>
-<p>Choose the integration order from the substantive model, time-series
-evidence and appropriate differencing analysis before comparing ARMA
-orders. Displaying criteria for several d values is allowed, but these
-fits need not share the same likelihood basis.
-<code>select_model(table, d=1)</code> restricts the candidate set to d =
-1; it does not choose d by minimizing criteria across integration
-orders. <code>order_search()</code> performs no differencing tests. With
-<code>d=None</code>, <code>auto_arima()</code> uses StatsForecast’s
-separate unit-root/differencing procedure before its ARMA search; it is
-a benchmark rather than a replacement for that specification work.</p>
+<p><code>at.dynamic_effects()</code> returns Statsmodels responses of the modeled dependent variable to a one-unit innovation, and their cumulative sums, from horizon zero through <code>horizon=20</code>. <code>at.plot_dynamic_effects()</code> plots both. Responses incorporate the fitted integration structure. A random walk has a unit response at every horizon; summing these gives 1, 2, 3, … rather than reconstructing its levels from stationary responses. An innovation response is not an intervention regression contribution or, without additional assumptions, an economic causal effect.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>effects <span class="op">=</span> at.dynamic_effects(result, horizon<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>effects_plot <span class="op">=</span> at.plot_dynamic_effects(result, horizon<span class="op">=</span><span class="dv">12</span>)</span></code></pre></div>
+<h2 id="model-comparison-and-selection">Model comparison and selection</h2>
+<p>Selection requires identical ordered response values, missing positions and time indexes, effective sample size and initialization metadata. Supply <code>d=</code> when a table contains more than one differencing order. Search output is grouped by d. <code>N</code> and parameter counts follow Statsmodels <code>nobs_effective</code> and <code>df_model</code>, including concentrated scale and exact diffuse terms; numerical equality with R is not assumed. Rebuild older tables without sample identity metadata.</p>
+<p>Choose the integration order from the substantive model, time-series evidence and appropriate differencing analysis before comparing ARMA orders. Displaying criteria for several d values is allowed, but these fits need not share the same likelihood basis. <code>select_model(table, d=1)</code> restricts the candidate set to d = 1; it does not choose d by minimizing criteria across integration orders. <code>order_search()</code> performs no differencing tests. With <code>d=None</code>, <code>auto_arima()</code> uses StatsForecast’s separate unit-root/differencing procedure before its ARMA search; it is a benchmark rather than a replacement for that specification work.</p>
 <h3 id="information-criteria">Information criteria</h3>
-<p>Writing
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ℓ</mi><annotation encoding="application/x-tex">\ell</annotation></semantics></math>
-for the reported fitted log likelihood,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
-for effective observations and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-for Statsmodels <code>df_model</code>,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">I</mi><mi mathvariant="normal">C</mi></mrow></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mi>−</mi><mn>2</mn><mi>ℓ</mi><mo>+</mo><mn>2</mn><mi>k</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">I</mi><mi mathvariant="normal">C</mi><mi mathvariant="normal">c</mi></mrow></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">I</mi><mi mathvariant="normal">C</mi></mrow><mo>+</mo><mfrac><mrow><mn>2</mn><mi>k</mi><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo>+</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><mrow><mi>N</mi><mo>−</mo><mi>k</mi><mo>−</mo><mn>1</mn></mrow></mfrac><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mrow><mi mathvariant="normal">B</mi><mi mathvariant="normal">I</mi><mi mathvariant="normal">C</mi></mrow></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mi>−</mi><mn>2</mn><mi>ℓ</mi><mo>+</mo><mi>k</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>N</mi><mo>,</mo></mtd></mtr><mtr><mtd columnalign="right" style="text-align: right; padding-right: 0"><mrow><mi mathvariant="normal">H</mi><mi mathvariant="normal">Q</mi><mi mathvariant="normal">I</mi><mi mathvariant="normal">C</mi></mrow></mtd><mtd columnalign="left" style="text-align: left; padding-left: 0"><mo>=</mo><mi>−</mi><mn>2</mn><mi>ℓ</mi><mo>+</mo><mn>2</mn><mi>k</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>N</mi><mo stretchy="false" form="postfix">)</mo><mi>.</mi></mtd></mtr></mtable><annotation encoding="application/x-tex">
+<p>Writing <span class="math inline"><em>ℓ</em></span> for the reported fitted log likelihood, <span class="math inline"><em>N</em></span> for effective observations and <span class="math inline"><em>k</em></span> for Statsmodels <code>df_model</code>,</p>
+<p><span class="math display">$$
 \begin{aligned}
 \mathrm{AIC}&amp;=-2\ell+2k,\\
 \mathrm{AICc}&amp;=\mathrm{AIC}+\frac{2k(k+1)}{N-k-1},\\
 \mathrm{BIC}&amp;=-2\ell+k\log N,\\
 \mathrm{HQIC}&amp;=-2\ell+2k\log(\log N).
 \end{aligned}
-</annotation></semantics></math></p>
-<p>AICc is undefined when
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>−</mo><mi>k</mi><mo>−</mo><mn>1</mn><mo>≤</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">N-k-1\leq0</annotation></semantics></math>
-and is reported as missing; nonfinite criterion values are ineligible.
-Counts include free parameters, concentrated innovation scale and exact
-diffuse state terms where applicable. Effective N follows the likelihood
-burn-in convention and should not be read as a generic count of
-nonmissing observations. Lower values balance fit against complexity
-only among eligible comparable candidates. They do not certify adequacy
-or causality. Recognized non-optimizer fits may be reported and
-selected, but this does not make their estimates maximum likelihood or
-establish the usual IC interpretation for an arbitrary estimator.</p>
-<h3 id="initialization-and-convergence-safeguards">Initialization and
-convergence safeguards</h3>
-<p><code>compare_models()</code> reports candidates without rejecting
-incompatible samples or initializations; <code>select_model()</code>
-enforces comparability. The comparison table includes
-<code>Initialization</code>, <code>Initialization Status</code>,
-<code>Initialization Detail</code> and <code>Convergence Status</code>.
-Unsupported or unavailable initialization metadata prevents selection;
-rebuild older tables lacking these safeguards.</p>
-<p>Signatures distinguish stationary, approximate-diffuse and
-exact-diffuse initialization. They retain diffuse means,
-approximate-diffuse variance and its units. Burn-in, diffuse periods and
-differencing must also agree. Stationary state dimensions and their
-model-dependent covariances need not be identical, so ordinary ARIMA
-specifications with different state-space sizes remain comparable.
-Known/custom state priors and unsupported representations have no
-automatic equivalence rule and are conservatively excluded from
-selection. Concentrated filtering scales approximate-diffuse variance by
-innovation scale; its variance convention cannot be mixed with absolute
-diffuse variance. Stationary and compatible exact-diffuse fits may mix
-concentrated and explicit scale estimation. Numerical equality with R is
-not assumed.</p>
-<p>Convergence uses state-space <code>mle_retvals</code> and
-<code>fit_details.minimize_results.success</code> where applicable,
-including GLS inner optimizers. Any explicit failure excludes the fit;
-unknown required convergence also excludes it.
-<code>Converged=None</code> distinguishes absent optimizer evidence from
-success, with <code>Convergence Status</code> separating unknown
-evidence from recognized non-optimizer estimators (Yule-Walker, Burg,
-innovations, Hannan-Rissanen). The latter remain eligible, but a
-not-applicable optimizer status does not imply maximum-likelihood
-estimation or model adequacy.</p>
-<p>Grid and recursive estimation retain warnings even when a fit raises
-an exception, alongside the failure message.</p>
-<p><code>at.compare_models()</code> accepts at least two fitted models
-and optional distinct <code>names</code>. Its table includes likelihood,
-AIC, AICc, BIC, and HQIC. Compare models for the same dependent variable
-and sample.</p>
-<p><code>at.order_search()</code> searches nonseasonal orders from zero
-to <code>p_max</code>/<code>q_max</code>, and differencing orders from
-<code>d_min</code> through <code>d_max</code> (both default to zero).
-<code>criterion</code> sorts the table; convergence status is retained.
-<code>at.select_model()</code> returns the eligible row minimizing AIC,
-AICc, BIC, or HQIC, excluding non-converged models when that column is
-present. Selection is not a diagnostic assessment.</p>
-<pre class="python"><code>alternative = ARIMA(y, order=(1, 0, 0), trend=&quot;n&quot;).fit()
-comparison = at.compare_models(result, alternative, names=[&quot;ARMA(1,1)&quot;, &quot;AR(1)&quot;])
-search = at.order_search(y, p_max=2, q_max=2, criterion=&quot;BIC&quot;, trend=&quot;n&quot;)
-selected = at.select_model(search, criterion=&quot;BIC&quot;)
-print(selected)</code></pre>
-<p><code>at.auto_arima()</code> returns a fitted <strong>StatsForecast
-AutoARIMA</strong> object, not a Statsmodels result. This nonseasonal
-benchmark accepts AIC, AICc, or BIC. With <code>d=None</code>, AutoARIMA
-chooses differencing; <code>allow_mean</code> and
-<code>allow_drift</code> control deterministic components.
-<code>at.auto_arima_summary()</code> takes that fitted object and
-returns a compact Series, including its mean/drift interpretation. The
-package’s Statsmodels diagnostic/forecast functions do not accept this
-object directly.</p>
-<pre class="python"><code>automatic = at.auto_arima(y, criterion=&quot;BIC&quot;, max_p=2, max_q=2)
-automatic_summary = at.auto_arima_summary(automatic)</code></pre>
+$$</span></p>
+<p>AICc is undefined when <span class="math inline"><em>N</em> − <em>k</em> − 1 ≤ 0</span> and is reported as missing; nonfinite criterion values are ineligible. Counts include free parameters, concentrated innovation scale and exact diffuse state terms where applicable. Effective N follows the likelihood burn-in convention and should not be read as a generic count of nonmissing observations. Lower values balance fit against complexity only among eligible comparable candidates. They do not certify adequacy or causality. Recognized non-optimizer fits may be reported and selected, but this does not make their estimates maximum likelihood or establish the usual IC interpretation for an arbitrary estimator.</p>
+<h3 id="initialization-and-convergence-safeguards">Initialization and convergence safeguards</h3>
+<p><code>compare_models()</code> reports candidates without rejecting incompatible samples or initializations; <code>select_model()</code> enforces comparability. The comparison table includes <code>Initialization</code>, <code>Initialization Status</code>, <code>Initialization Detail</code> and <code>Convergence Status</code>. Unsupported or unavailable initialization metadata prevents selection; rebuild older tables lacking these safeguards.</p>
+<p>Signatures distinguish stationary, approximate-diffuse and exact-diffuse initialization. They retain diffuse means, approximate-diffuse variance and its units. Burn-in, diffuse periods and differencing must also agree. Stationary state dimensions and their model-dependent covariances need not be identical, so ordinary ARIMA specifications with different state-space sizes remain comparable. Known/custom state priors and unsupported representations have no automatic equivalence rule and are conservatively excluded from selection. Concentrated filtering scales approximate-diffuse variance by innovation scale; its variance convention cannot be mixed with absolute diffuse variance. Stationary and compatible exact-diffuse fits may mix concentrated and explicit scale estimation. Numerical equality with R is not assumed.</p>
+<p>Convergence uses state-space <code>mle_retvals</code> and <code>fit_details.minimize_results.success</code> where applicable, including GLS inner optimizers. Any explicit failure excludes the fit; unknown required convergence also excludes it. <code>Converged=None</code> distinguishes absent optimizer evidence from success, with <code>Convergence Status</code> separating unknown evidence from recognized non-optimizer estimators (Yule-Walker, Burg, innovations, Hannan-Rissanen). The latter remain eligible, but a not-applicable optimizer status does not imply maximum-likelihood estimation or model adequacy.</p>
+<p>Grid and recursive estimation retain warnings even when a fit raises an exception, alongside the failure message.</p>
+<p><code>at.compare_models()</code> accepts at least two fitted models and optional distinct <code>names</code>. Its table includes likelihood, AIC, AICc, BIC, and HQIC. Compare models for the same dependent variable and sample.</p>
+<p><code>at.order_search()</code> searches nonseasonal orders from zero to <code>p_max</code>/<code>q_max</code>, and differencing orders from <code>d_min</code> through <code>d_max</code> (both default to zero). <code>criterion</code> sorts the table; convergence status is retained. <code>at.select_model()</code> returns the eligible row minimizing AIC, AICc, BIC, or HQIC, excluding non-converged models when that column is present. Selection is not a diagnostic assessment.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>alternative <span class="op">=</span> ARIMA(y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>), trend<span class="op">=</span><span class="st">&quot;n&quot;</span>).fit()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>comparison <span class="op">=</span> at.compare_models(result, alternative, names<span class="op">=</span>[<span class="st">&quot;ARMA(1,1)&quot;</span>, <span class="st">&quot;AR(1)&quot;</span>])</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>search <span class="op">=</span> at.order_search(y, p_max<span class="op">=</span><span class="dv">2</span>, q_max<span class="op">=</span><span class="dv">2</span>, criterion<span class="op">=</span><span class="st">&quot;BIC&quot;</span>, trend<span class="op">=</span><span class="st">&quot;n&quot;</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>selected <span class="op">=</span> at.select_model(search, criterion<span class="op">=</span><span class="st">&quot;BIC&quot;</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(selected)</span></code></pre></div>
+<p><code>at.auto_arima()</code> returns a fitted <strong>StatsForecast AutoARIMA</strong> object, not a Statsmodels result. This nonseasonal benchmark accepts AIC, AICc, or BIC. With <code>d=None</code>, AutoARIMA chooses differencing; <code>allow_mean</code> and <code>allow_drift</code> control deterministic components. <code>at.auto_arima_summary()</code> takes that fitted object and returns a compact Series, including its mean/drift interpretation. The package’s Statsmodels diagnostic/forecast functions do not accept this object directly.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>automatic <span class="op">=</span> at.auto_arima(y, criterion<span class="op">=</span><span class="st">&quot;BIC&quot;</span>, max_p<span class="op">=</span><span class="dv">2</span>, max_q<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>automatic_summary <span class="op">=</span> at.auto_arima_summary(automatic)</span></code></pre></div>
 <h2 id="forecasting">Forecasting</h2>
-<p>All four functions below accept a fitted <strong>Statsmodels ARIMA
-result</strong>. <code>steps=20</code> is a positive integer, and
-<code>level=0.95</code> is a central normal-theory prediction-interval
-coverage strictly between zero and one.</p>
+<p>All four functions below accept a fitted <strong>Statsmodels ARIMA result</strong>. <code>steps=20</code> is a positive integer, and <code>level=0.95</code> is a central normal-theory prediction-interval coverage strictly between zero and one.</p>
 <ul>
-<li><code>at.forecast_error_variance()</code> returns a NumPy array for
-horizons 1 through <code>steps</code>. It independently calculates
-innovation-based variance from the full ARIMA psi weights, including
-ordinary/seasonal integration, on the original dependent-variable
-scale.</li>
-<li><code>at.dynamic_forecast()</code> returns a DataFrame indexed by
-<code>Horizon</code>, with <code>Forecast</code>, <code>FEV</code>,
-<code>SE</code>, <code>Lower</code>, and <code>Upper</code>. Forecasts
-are recursive from the sample end; uncertainty comes from the
-independent FEV calculation.</li>
-<li><code>at.plot_forecast()</code> returns an observed/forecast figure
-with two <strong>unfilled interval boundary lines</strong> and a
-forecast-origin marker.</li>
-<li><code>at.plot_fan_chart()</code> returns a figure with nested shaded
-central intervals, stronger centrally and fading outward, and a clear
-point forecast.</li>
+<li><code>at.forecast_error_variance()</code> returns a NumPy array for horizons 1 through <code>steps</code>. It independently calculates innovation-based variance from the full ARIMA psi weights, including ordinary/seasonal integration, on the original dependent-variable scale.</li>
+<li><code>at.dynamic_forecast()</code> returns a DataFrame indexed by <code>Horizon</code>, with <code>Forecast</code>, <code>FEV</code>, <code>SE</code>, <code>Lower</code>, and <code>Upper</code>. Forecasts are recursive from the sample end; uncertainty comes from the independent FEV calculation.</li>
+<li><code>at.plot_forecast()</code> returns an observed/forecast figure with two <strong>unfilled interval boundary lines</strong> and a forecast-origin marker.</li>
+<li><code>at.plot_fan_chart()</code> returns a figure with nested shaded central intervals, stronger centrally and fading outward, and a clear point forecast.</li>
 </ul>
-<pre class="python"><code>fev = at.forecast_error_variance(result, steps=20)
-forecast = at.dynamic_forecast(result, steps=20, level=0.95)
-forecast_plot = at.plot_forecast(result, steps=20, level=0.95, history=50)
-fan_plot = at.plot_fan_chart(result, steps=20, history=50)
-print(forecast.head().round(4))</code></pre>
-<p>For this seeded ARMA fit, the first forecast is about 2.94, with a
-95% prediction interval of approximately [0.97, 4.91]. At horizon two,
-variance increases from about 1.01 to 2.34. The point forecast moves
-toward the fitted zero mean while uncertainty accumulates; these
-intervals concern future observations conditional on the fitted model,
-not certainty about its specification. Small numerical differences
-across dependency versions are expected.</p>
-<p>The default fan levels are exactly
-<strong><code>(0.50, 0.70, 0.80, 0.90, 0.95, 0.99)</code></strong>.
-Custom levels must be nonempty, distinct, and strictly between zero and
-one; input order does not matter. In both plots, <code>history=50</code>
-shows the final 50 observations, <code>history=None</code> shows the
-entire sample, and a larger request shows all available observations.
-Positive integer histories are required otherwise. Supported time
-indices continue into the forecast; period indices display period-start
-dates. Unsupported indices use observation positions if Statsmodels can
-produce the forecast; its forecasting errors propagate.</p>
-<pre class="python"><code>custom_fan = at.plot_fan_chart(result, steps=12, levels=(0.95, 0.50, 0.80), history=None)</code></pre>
-<p>For innovation weights
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ψ</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\psi_j</annotation></semantics></math>
-of the full fitted ARIMA transfer function, including integration, the
-implemented variance at horizon
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mo>≥</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">h\geq1</annotation></semantics></math>
-is</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>h</mi></msub><mo>=</mo><msup><mover><mi>σ</mi><mo accent="true">̂</mo></mover><mn>2</mn></msup><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>h</mi><mo>−</mo><mn>1</mn></mrow></munderover><msubsup><mi>ψ</mi><mi>j</mi><mn>2</mn></msubsup><mo>,</mo><mspace width="2.0em"></mspace><msub><mover><mi>y</mi><mo accent="true">̂</mo></mover><mrow><mi>T</mi><mo>+</mo><mi>h</mi><mo>∣</mo><mi>T</mi></mrow></msub><mspace width="0.222em"></mspace><mo>±</mo><mspace width="0.222em"></mspace><msub><mi>z</mi><mrow><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo>+</mo><mrow><mi mathvariant="normal">l</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">v</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">l</mi></mrow><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mn>2</mn></mrow></msub><msqrt><msub><mi>V</mi><mi>h</mi></msub></msqrt><mi>.</mi></mrow><annotation encoding="application/x-tex">
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fev <span class="op">=</span> at.forecast_error_variance(result, steps<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> at.dynamic_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>forecast_plot <span class="op">=</span> at.plot_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>, history<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>fan_plot <span class="op">=</span> at.plot_fan_chart(result, steps<span class="op">=</span><span class="dv">20</span>, history<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(forecast.head().<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div>
+<p>For this seeded ARMA fit, the first forecast is about 2.94, with a 95% prediction interval of approximately [0.97, 4.91]. At horizon two, variance increases from about 1.01 to 2.34. The point forecast moves toward the fitted zero mean while uncertainty accumulates; these intervals concern future observations conditional on the fitted model, not certainty about its specification. Small numerical differences across dependency versions are expected.</p>
+<p>The default fan levels are exactly <strong><code>(0.50, 0.70, 0.80, 0.90, 0.95, 0.99)</code></strong>. Custom levels must be nonempty, distinct, and strictly between zero and one; input order does not matter. In both plots, <code>history=50</code> shows the final 50 observations, <code>history=None</code> shows the entire sample, and a larger request shows all available observations. Positive integer histories are required otherwise. Supported time indices continue into the forecast; period indices display period-start dates. Unsupported indices use observation positions if Statsmodels can produce the forecast; its forecasting errors propagate.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>custom_fan <span class="op">=</span> at.plot_fan_chart(result, steps<span class="op">=</span><span class="dv">12</span>, levels<span class="op">=</span>(<span class="fl">0.95</span>, <span class="fl">0.50</span>, <span class="fl">0.80</span>), history<span class="op">=</span><span class="va">None</span>)</span></code></pre></div>
+<p>For innovation weights <span class="math inline"><em>ψ</em><sub><em>j</em></sub></span> of the full fitted ARIMA transfer function, including integration, the implemented variance at horizon <span class="math inline"><em>h</em> ≥ 1</span> is</p>
+<p><span class="math display">$$
 V_h=\hat\sigma^2\sum_{j=0}^{h-1}\psi_j^2,\qquad
 \hat y_{T+h\mid T}\ \pm\ z_{(1+\mathrm{level})/2}\sqrt{V_h}.
-</annotation></semantics></math></p>
-<p>For an AR(1),
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ψ</mi><mi>j</mi></msub><mo>=</mo><msup><mi>ϕ</mi><mi>j</mi></msup></mrow><annotation encoding="application/x-tex">\psi_j=\phi^j</annotation></semantics></math>,
-so variance approaches a finite limit when
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">|</mo><mi>ϕ</mi><mo stretchy="false" form="prefix">|</mo><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">|\phi|&lt;1</annotation></semantics></math>.
-For a random walk,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ψ</mi><mi>j</mi></msub><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\psi_j=1</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>V</mi><mi>h</mi></msub><mo>=</mo><mi>h</mi><msup><mover><mi>σ</mi><mo accent="true">̂</mo></mover><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">V_h=h\hat\sigma^2</annotation></semantics></math>:
-uncertainty grows with the horizon. These are conditional normal-theory
-prediction intervals given the estimated specification, parameters and
-future regressor paths. Their nominal coverage depends on the model and
-innovation assumptions; they are not confidence intervals for the
-conditional mean alone. Dynamic forecasts recurse from the sample
-endpoint without inserting subsequently observed outcomes. Static
-forecasting and forecast evaluation/comparison belong to
-Forecasting-Tools.</p>
-<p>FEV treats fitted parameters and past innovations as known;
-finite-sample state uncertainty or missing observations can cause
-differences from Statsmodels’ state-space variances.
-Parameter-estimation uncertainty is not included. Concentrated-scale
-fits use <code>result.scale</code>; other fits use the
-<code>sigma2</code> parameter. Models with external regressors require
-future values through keyword-only <code>exog=</code>. No
-transformations or evaluation procedures are added by these
-functions.</p>
-<h2 id="manual-intervention-modelling">Manual intervention
-modelling</h2>
-<p>Interventions describe specified events; no dates or decay rates are
-detected or estimated automatically.
-<code>at.outlier_regressors(y, dates=None, types=&quot;AO&quot;, delta=0.7, *, positions=None)</code>
-returns a named pandas DataFrame ready for Statsmodels
-<code>ARIMA(..., exog=X).fit()</code>.</p>
+$$</span></p>
+<p>For an AR(1), <span class="math inline"><em>ψ</em><sub><em>j</em></sub> = <em>ϕ</em><sup><em>j</em></sup></span>, so variance approaches a finite limit when <span class="math inline">|<em>ϕ</em>| &lt; 1</span>. For a random walk, <span class="math inline"><em>ψ</em><sub><em>j</em></sub> = 1</span> and <span class="math inline"><em>V</em><sub><em>h</em></sub> = <em>h</em><em>σ̂</em><sup>2</sup></span>: uncertainty grows with the horizon. These are conditional normal-theory prediction intervals given the estimated specification, parameters and future regressor paths. Their nominal coverage depends on the model and innovation assumptions; they are not confidence intervals for the conditional mean alone. Dynamic forecasts recurse from the sample endpoint without inserting subsequently observed outcomes. Static forecasting and forecast evaluation/comparison belong to Forecasting-Tools.</p>
+<p>FEV treats fitted parameters and past innovations as known; finite-sample state uncertainty or missing observations can cause differences from Statsmodels’ state-space variances. Parameter-estimation uncertainty is not included. Concentrated-scale fits use <code>result.scale</code>; other fits use the <code>sigma2</code> parameter. Models with external regressors require future values through keyword-only <code>exog=</code>. No transformations or evaluation procedures are added by these functions.</p>
+<h2 id="manual-intervention-modelling">Manual intervention modelling</h2>
+<p>Interventions describe specified events; no dates or decay rates are detected or estimated automatically. <code>at.outlier_regressors(y, dates=None, types=&quot;AO&quot;, delta=0.7, *, positions=None)</code> returns a named pandas DataFrame ready for Statsmodels <code>ARIMA(..., exog=X).fit()</code>.</p>
 <p>For a chosen observation T0:</p>
-<table>
+<table class="caption-top">
 <colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th>Type</th>
 <th>Regressor</th>
 <th>Coefficient interpretation</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>AO</td>
 <td>One at T0, zero elsewhere</td>
 <td>One-observation displacement</td>
 </tr>
-<tr>
+<tr class="even">
 <td>LS</td>
 <td>Zero before T0, one from T0 onward</td>
 <td>Sustained level displacement</td>
 </tr>
-<tr>
+<tr class="odd">
 <td>TC</td>
 <td>Zero before T0, delta**(t-T0) afterward</td>
 <td>Initial displacement, decaying by delta per observation</td>
 </tr>
 </tbody>
 </table>
-<p>The default TC decay is 0.7, following ARIMA-Tools-R; require 0 &lt;
-delta &lt; 1. One scalar decay applies to all TC events. Multiple
-interventions and repeated types are allowed; duplicate type/date pairs
-are rejected. Different types on the same date are allowed, but can be
-unidentified in short samples.</p>
+<p>The default TC decay is 0.7, following ARIMA-Tools-R; require 0 &lt; delta &lt; 1. One scalar decay applies to all TC events. Multiple interventions and repeated types are allowed; duplicate type/date pairs are rejected. Different types on the same date are allowed, but can be unidentified in short samples.</p>
 <h3 id="complete-statsmodels-example">Complete Statsmodels example</h3>
-<p>The following simulated example specifies a permanent shift, a
-one-quarter outlier, and a temporary change. In empirical work, choose
-dates from the substantive question and inspect the fitted
-diagnostics.</p>
-<pre class="python"><code>import numpy as np
-import pandas as pd
-from statsmodels.tsa.arima.model import ARIMA
-import arima_tools as at
-
-index = pd.period_range(&quot;2000Q1&quot;, periods=104, freq=&quot;Q&quot;)
-X = at.outlier_regressors(
-    index, dates=[&quot;2008Q4&quot;, &quot;2020Q2&quot;, &quot;2021Q1&quot;],
-    types=[&quot;LS&quot;, &quot;AO&quot;, &quot;TC&quot;], delta=0.7,
-)
-rng = np.random.default_rng(1234)
-y = pd.Series(
-    100 + 0.2 * np.arange(len(index))
-    + X.to_numpy() @ np.array([5.0, -8.0, 3.0])
-    + rng.normal(size=len(index)),
-    index=index, name=&quot;Output&quot;,
-)
-results = ARIMA(y, order=(1, 0, 0), trend=&quot;ct&quot;, exog=X).fit(
-    cov_type=&quot;oim&quot;, method_kwargs={&quot;maxiter&quot;: 500},
-)
-print(&quot;Converged:&quot;, results.mle_retvals[&quot;converged&quot;])
-print(at.coefficient_diagnostics(results))
-effects = at.intervention_effects(results, X)
-figure = at.plot_interventions(y, X, results=results, individual=True)
-future_X = at.extend_interventions(X, steps=8)
-forecast = at.dynamic_forecast(results, steps=8, exog=future_X)
-fan = at.plot_fan_chart(results, steps=8, exog=future_X)</code></pre>
-<p>The example explicitly requests observed-information covariance
-(`cov_type=“oim”) and allows more optimizer iterations. Inspect
-convergence and standard errors: sparse, single-observation AO
-regressors can give unstable default OPG covariance estimates. An AO
-coefficient is supported by very limited event information; normal/Wald
-inference remains approximate and should not determine event inclusion
-automatically. The package does not change Statsmodels fitting
-defaults.</p>
+<p>The following simulated example specifies a permanent shift, a one-quarter outlier, and a temporary change. In empirical work, choose dates from the substantive question and inspect the fitted diagnostics.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima.model <span class="im">import</span> ARIMA</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> arima_tools <span class="im">as</span> at</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>index <span class="op">=</span> pd.period_range(<span class="st">&quot;2000Q1&quot;</span>, periods<span class="op">=</span><span class="dv">104</span>, freq<span class="op">=</span><span class="st">&quot;Q&quot;</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> at.outlier_regressors(</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    index, dates<span class="op">=</span>[<span class="st">&quot;2008Q4&quot;</span>, <span class="st">&quot;2020Q2&quot;</span>, <span class="st">&quot;2021Q1&quot;</span>],</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    types<span class="op">=</span>[<span class="st">&quot;LS&quot;</span>, <span class="st">&quot;AO&quot;</span>, <span class="st">&quot;TC&quot;</span>], delta<span class="op">=</span><span class="fl">0.7</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1234</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> pd.Series(</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="dv">100</span> <span class="op">+</span> <span class="fl">0.2</span> <span class="op">*</span> np.arange(<span class="bu">len</span>(index))</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> X.to_numpy() <span class="op">@</span> np.array([<span class="fl">5.0</span>, <span class="op">-</span><span class="fl">8.0</span>, <span class="fl">3.0</span>])</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> rng.normal(size<span class="op">=</span><span class="bu">len</span>(index)),</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>index, name<span class="op">=</span><span class="st">&quot;Output&quot;</span>,</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> ARIMA(y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>), trend<span class="op">=</span><span class="st">&quot;ct&quot;</span>, exog<span class="op">=</span>X).fit(</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    cov_type<span class="op">=</span><span class="st">&quot;oim&quot;</span>, method_kwargs<span class="op">=</span>{<span class="st">&quot;maxiter&quot;</span>: <span class="dv">500</span>},</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Converged:&quot;</span>, results.mle_retvals[<span class="st">&quot;converged&quot;</span>])</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(at.coefficient_diagnostics(results))</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>effects <span class="op">=</span> at.intervention_effects(results, X)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>figure <span class="op">=</span> at.plot_interventions(y, X, results<span class="op">=</span>results, individual<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>future_X <span class="op">=</span> at.extend_interventions(X, steps<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> at.dynamic_forecast(results, steps<span class="op">=</span><span class="dv">8</span>, exog<span class="op">=</span>future_X)</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>fan <span class="op">=</span> at.plot_fan_chart(results, steps<span class="op">=</span><span class="dv">8</span>, exog<span class="op">=</span>future_X)</span></code></pre></div>
+<p>The example explicitly requests observed-information covariance (`cov_type=“oim”) and allows more optimizer iterations. Inspect convergence and standard errors: sparse, single-observation AO regressors can give unstable default OPG covariance estimates. An AO coefficient is supported by very limited event information; normal/Wald inference remains approximate and should not determine event inclusion automatically. The package does not change Statsmodels fitting defaults.</p>
 <h3 id="dates-positions-and-metadata">Dates, positions and metadata</h3>
-<p>Pass a Series, pandas Index, or one-dimensional array. Exactly one of
-<code>dates</code> or <code>positions</code> is required. Positions are
-<strong>zero-based</strong>; arrays receive a RangeIndex. Period dates
-resolve to their containing period using the index frequency. Datetime
-events require exact, complete dates with matching timezone. Calendar
-indexes must be regular, unique and increasing, without missing labels.
-Numerical indexes must be unique and increasing. No observation is
-sorted or dropped; missing response values retain their positions. TC
-decay advances one observation at a time, rather than by calendar-day
-distance.</p>
-<p>Generated columns include names such as <code>AO_2020Q2</code>,
-<code>LS_2008-09</code>, and <code>TC_pos12</code>.
-<code>X.attrs[&quot;arima_tools_interventions&quot;]</code> is a version-1
-dictionary with:</p>
+<p>Pass a Series, pandas Index, or one-dimensional array. Exactly one of <code>dates</code> or <code>positions</code> is required. Positions are <strong>zero-based</strong>; arrays receive a RangeIndex. Period dates resolve to their containing period using the index frequency. Datetime events require exact, complete dates with matching timezone. Calendar indexes must be regular, unique and increasing, without missing labels. Numerical indexes must be unique and increasing. No observation is sorted or dropped; missing response values retain their positions. TC decay advances one observation at a time, rather than by calendar-day distance.</p>
+<p>Generated columns include names such as <code>AO_2020Q2</code>, <code>LS_2008-09</code>, and <code>TC_pos12</code>. <code>X.attrs[&quot;arima_tools_interventions&quot;]</code> is a version-1 dictionary with:</p>
 <ul>
-<li><code>origin_length</code>, <code>origin_index</code>: original
-sample length and index description.</li>
-<li><code>row_start</code>, <code>index</code>: current block’s offset
-and index description.</li>
-<li><code>events</code>: type, zero-based position, label, column, and
-delta (None for AO/LS).</li>
+<li><code>origin_length</code>, <code>origin_index</code>: original sample length and index description.</li>
+<li><code>row_start</code>, <code>index</code>: current block’s offset and index description.</li>
+<li><code>events</code>: type, zero-based position, label, column, and delta (None for AO/LS).</li>
 </ul>
-<p>Descriptions contain index kind, dtype, frequency, timezone and
-ordered labels. <code>extend_interventions</code> preserves the original
-event specifications while updating the current block. Keep the original
-X: pandas transformations may discard attrs. Effects, plotting and
-extension validate metadata against the numerical columns; interventions
-are never inferred from prefixes alone. Ordinary controls can be
-combined with X for fitting; pass the original intervention-only X to
-the effects and plotting functions.</p>
-<h3 id="effects-adjustment-and-identification">Effects, adjustment and
-identification</h3>
-<p><code>at.intervention_effects(results, X)</code> returns an indexed
-DataFrame: <code>Observed</code>, one named contribution per
-intervention, <code>Combined</code>, and <code>Adjusted</code>. Each
-contribution is beta_hat*X; Combined sums only those intervention
-contributions. Adjusted is Observed minus Combined. Ordinary controls,
-deterministic terms and ARIMA errors are not removed. <strong>The
-intervention-adjusted series is not a residual.</strong> Plotting
-delegates to this same numerical helper.</p>
-<p><code>at.plot_interventions(y, X, *, results=None, individual=False, title=&quot;Intervention Effects&quot;)</code>
-returns a Plotly Figure. Without results it shows observations and
-chosen dates. With results, the upper panel shows observed and adjusted
-series; the lower panel shows the combined effect.
-<code>individual=True</code> adds component curves. Same-date events
-share one marker and tooltip.</p>
-<p>All effects stay on the modeled response scale. If y is log GDP,
-adjustment remains in logarithms. Statsmodels estimates a regression
-with ARIMA errors: pass the <strong>undifferenced regression
-columns</strong> even when d &gt; 0. An LS remains a step in the
-supplied response; its first difference is a pulse. An AO’s first
-difference has adjacent positive and negative pulses. TC remains
-geometric on the supplied scale. ARIMA integration does not turn these
-regressors into innovation impulse responses. There is no automatic
-back-transformation.</p>
-<p>Deterministic and stochastic permanence are different. In
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>t</mi></msub><mo>=</mo><mi>ω</mi><mi>L</mi><msub><mi>S</mi><mi>t</mi></msub><mo>+</mo><msub><mi>u</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">y_t=\omega LS_t+u_t</annotation></semantics></math>,
-with
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>u</mi><mi>t</mi></msub><mo>=</mo><msub><mi>u</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>ε</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">u_t=u_{t-1}+\varepsilon_t</annotation></semantics></math>,
-the specified LS contributes a permanent deterministic shift of
-magnitude
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ω</mi><annotation encoding="application/x-tex">\omega</annotation></semantics></math>.
-An innovation
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ε</mi><mi>t</mi></msub><annotation encoding="application/x-tex">\varepsilon_t</annotation></semantics></math>
-also has a permanent effect on the stochastic component
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>u</mi><mi>t</mi></msub><annotation encoding="application/x-tex">u_t</annotation></semantics></math>.
-A lasting movement in the observed series alone therefore does not
-establish that it is deterministic or caused by the specified event. The
-estimated LS coefficient describes the shift conditional on the chosen
-event, controls and ARIMA error model.</p>
-<p><code>order_search(..., exog=None)</code> and
-<code>recursive_estimation(..., exog=None)</code> accept keyword-only
-finite aligned regressors. DataFrame indexes must match Series y
-exactly; arrays align by position, with indexed exog supplying labels
-when y is an array. All external columns and built-in trends enter
-identification checks, but the original columns are passed to
-Statsmodels. Complete response samples retain the differenced-design
-check. With missing responses, the check preserves the original time
-grid and tests observed regressors modulo the visible integration
-directions: constants for I(1), affine paths for I(2). Thus a contrast
-across a gap can identify an LS even when its event-date response is
-missing. Rank uses column scaling and machine-precision SVD tolerance,
-not a discretionary near-collinearity cutoff. This algebraic check does
-not guarantee precise estimates.</p>
-<p>An LS at the first observation can duplicate a constant or disappear
-under differencing. Events at the last observation can generate
-identical columns. The builder warns about dependent event columns;
-fitting helpers report failed or unidentified specifications without
-removing regressors. Recursive windows before an event is observed
-retain missing estimates and an explanatory status. Parameter counts
-include external coefficients. Stage 2 convergence, effective sample,
-initialization and differencing safeguards remain in force. Comparison
-reports <code>Identified</code> and <code>Identification Status</code>;
-selection requires identification to be established
-(<code>Identified=True</code>). Different exogenous specifications
-remain comparable when their response sample and likelihood conventions
-are compatible; X equality is not required.</p>
-<p>For response gaps, the observed-data check recognizes the standard
-Statsmodels state-space representation with proper stationary ARMA
-states and integration-only exact-diffuse initialization (no burn-in),
-or approximate-diffuse initialization with its standard
-integration-order burn-in. Unsupported initialization, additional
-diffuse states or custom burn-in produce <strong>identification not
-established</strong>, rather than a mathematical rejection. Exact
-dependencies among observed regression columns remain unidentified.
-Under exact diffuse initialization, confounding with the integration
-directions is also unidentified. Under finite approximate-diffuse
-initialization, deficient diffuse-limit contrasts are inconclusive: the
-finite initial-state prior can supply additional likelihood information.
-Successful optimization alone does not resolve this uncertainty.</p>
-<p>Search may estimate an inconclusive specification, retaining
-<code>Identified=None</code>, an explanatory status and a warning;
-automatic selection excludes it. Effects from an inconclusive supplied
-fit carry a warning and remain conditional on its coefficients. Neither
-helper removes columns or responses. Recursive estimation retains its
-existing requirement for a complete finite response sample; its
-complete-data rank check continues to report collinear post-event
-windows until the full design becomes identifiable.</p>
-<h3 id="dynamic-forecasting-with-interventions">Dynamic forecasting with
-interventions</h3>
-<p><code>at.extend_interventions(X, steps=20, *, future_index=None)</code>
-returns <strong>future rows only</strong>. AO stays zero, LS stays one,
-and TC decay continues from the original event, without restarting at
-the forecast origin. It continues existing events; it does not introduce
-new future events. Regular period, datetime, RangeIndex and equally
-spaced numerical indexes can continue automatically; otherwise supply an
-increasing future index. Explicit continuations must match known
-frequencies.</p>
-<p><code>dynamic_forecast</code>, <code>plot_forecast</code> and
-<code>plot_fan_chart</code> accept keyword-only <code>exog=None</code>
-for all future external regressors. DataFrame columns must have the
-fitted names in the fitted order and match the model’s forecast index;
-unnamed arrays must have the correct shape and are interpreted in fitted
-column order. Supply ordinary controls too, when present; built-in
-trends need no supplied columns. Forecast-error variances are unchanged
-and condition on the parameters and future regressors. No coefficient,
-date, decay or model-selection uncertainty is added. Existing
-missing-history/initialization limitations of innovation-based FEV still
-apply. Static forecasting and forecast evaluation remain the
-responsibility of Forecasting-Tools.</p>
-<h2 id="recursive-estimation-and-parameter-stability">Recursive
-estimation and parameter stability</h2>
-<p><code>at.recursive_estimation()</code> takes the original series and
-a <code>(p, d, q)</code> order and returns a long-format
-expanding-window table with estimates, standard errors, intervals,
-endpoints and convergence status. <code>initial</code> is an observation
-count, a fraction between zero and one, or <code>None</code> (an
-automatic 10% rule subject to <code>min_df=20</code>). Ordinary controls
-and interventions can be supplied through aligned keyword-only
-<code>exog=</code>. The response must be complete and finite. Windows
-retain the same specified columns; unidentified windows remain visible
-with missing estimates and explanatory status rather than silently
-dropping regressors.</p>
-<p>The intervention example above defines a separate
-<code>results</code> object. This stability example returns to the
-earlier ARMA series saved as <code>arma_y</code>:</p>
-<pre class="python"><code>recursive = at.recursive_estimation(arma_y, order=(1, 0, 1), initial=220, trend=&quot;n&quot;)
-stability_plot = at.plot_parameter_stability(recursive, parameters=[&quot;ar.L1&quot;, &quot;ma.L1&quot;])</code></pre>
-<p><code>at.plot_parameter_stability()</code> takes the recursive table.
-<code>parameters=None</code> displays all parameters except
-<code>sigma2</code>; a string or sequence selects parameters.
-<code>reference=True</code> adds full-sample estimates only when the
-final window is valid. Captured warnings and failure reasons remain in
-the table; nonconverged estimates are excluded from the plot. An
-optional <code>breakpoint</code> is only a graphical marker matching the
-endpoint index, not a structural-break test.</p>
-<p>Intervals are pointwise, approximate normal intervals, estimate
-plus/minus the normal critical value times its standard error. Expanding
-windows overlap, so successive estimates are dependent; these are not
-simultaneous confidence bands. A changing path can motivate
-investigation but is not a formal rejection of parameter constancy. A
-visually stable path does not establish constancy either.</p>
+<p>Descriptions contain index kind, dtype, frequency, timezone and ordered labels. <code>extend_interventions</code> preserves the original event specifications while updating the current block. Keep the original X: pandas transformations may discard attrs. Effects, plotting and extension validate metadata against the numerical columns; interventions are never inferred from prefixes alone. Ordinary controls can be combined with X for fitting; pass the original intervention-only X to the effects and plotting functions.</p>
+<h3 id="effects-adjustment-and-identification">Effects, adjustment and identification</h3>
+<p><code>at.intervention_effects(results, X)</code> returns an indexed DataFrame: <code>Observed</code>, one named contribution per intervention, <code>Combined</code>, and <code>Adjusted</code>. Each contribution is beta_hat*X; Combined sums only those intervention contributions. Adjusted is Observed minus Combined. Ordinary controls, deterministic terms and ARIMA errors are not removed. <strong>The intervention-adjusted series is not a residual.</strong> Plotting delegates to this same numerical helper.</p>
+<p><code>at.plot_interventions(y, X, *, results=None, individual=False, title=&quot;Intervention Effects&quot;)</code> returns a Plotly Figure. Without results it shows observations and chosen dates. With results, the upper panel shows observed and adjusted series; the lower panel shows the combined effect. <code>individual=True</code> adds component curves. Same-date events share one marker and tooltip.</p>
+<p>All effects stay on the modeled response scale. If y is log GDP, adjustment remains in logarithms. Statsmodels estimates a regression with ARIMA errors: pass the <strong>undifferenced regression columns</strong> even when d &gt; 0. An LS remains a step in the supplied response; its first difference is a pulse. An AO’s first difference has adjacent positive and negative pulses. TC remains geometric on the supplied scale. ARIMA integration does not turn these regressors into innovation impulse responses. There is no automatic back-transformation.</p>
+<p>Deterministic and stochastic permanence are different. In <span class="math inline"><em>y</em><sub><em>t</em></sub> = <em>ω</em><em>L</em><em>S</em><sub><em>t</em></sub> + <em>u</em><sub><em>t</em></sub></span>, with <span class="math inline"><em>u</em><sub><em>t</em></sub> = <em>u</em><sub><em>t</em> − 1</sub> + <em>ε</em><sub><em>t</em></sub></span>, the specified LS contributes a permanent deterministic shift of magnitude <span class="math inline"><em>ω</em></span>. An innovation <span class="math inline"><em>ε</em><sub><em>t</em></sub></span> also has a permanent effect on the stochastic component <span class="math inline"><em>u</em><sub><em>t</em></sub></span>. A lasting movement in the observed series alone therefore does not establish that it is deterministic or caused by the specified event. The estimated LS coefficient describes the shift conditional on the chosen event, controls and ARIMA error model.</p>
+<p><code>order_search(..., exog=None)</code> and <code>recursive_estimation(..., exog=None)</code> accept keyword-only finite aligned regressors. DataFrame indexes must match Series y exactly; arrays align by position, with indexed exog supplying labels when y is an array. All external columns and built-in trends enter identification checks, but the original columns are passed to Statsmodels. Complete response samples retain the differenced-design check. With missing responses, the check preserves the original time grid and tests observed regressors modulo the visible integration directions: constants for I(1), affine paths for I(2). Thus a contrast across a gap can identify an LS even when its event-date response is missing. Rank uses column scaling and machine-precision SVD tolerance, not a discretionary near-collinearity cutoff. This algebraic check does not guarantee precise estimates.</p>
+<p>An LS at the first observation can duplicate a constant or disappear under differencing. Events at the last observation can generate identical columns. The builder warns about dependent event columns; fitting helpers report failed or unidentified specifications without removing regressors. Recursive windows before an event is observed retain missing estimates and an explanatory status. Parameter counts include external coefficients. Stage 2 convergence, effective sample, initialization and differencing safeguards remain in force. Comparison reports <code>Identified</code> and <code>Identification Status</code>; selection requires identification to be established (<code>Identified=True</code>). Different exogenous specifications remain comparable when their response sample and likelihood conventions are compatible; X equality is not required.</p>
+<p>For response gaps, the observed-data check recognizes the standard Statsmodels state-space representation with proper stationary ARMA states and integration-only exact-diffuse initialization (no burn-in), or approximate-diffuse initialization with its standard integration-order burn-in. Unsupported initialization, additional diffuse states or custom burn-in produce <strong>identification not established</strong>, rather than a mathematical rejection. Exact dependencies among observed regression columns remain unidentified. Under exact diffuse initialization, confounding with the integration directions is also unidentified. Under finite approximate-diffuse initialization, deficient diffuse-limit contrasts are inconclusive: the finite initial-state prior can supply additional likelihood information. Successful optimization alone does not resolve this uncertainty.</p>
+<p>Search may estimate an inconclusive specification, retaining <code>Identified=None</code>, an explanatory status and a warning; automatic selection excludes it. Effects from an inconclusive supplied fit carry a warning and remain conditional on its coefficients. Neither helper removes columns or responses. Recursive estimation retains its existing requirement for a complete finite response sample; its complete-data rank check continues to report collinear post-event windows until the full design becomes identifiable.</p>
+<h3 id="dynamic-forecasting-with-interventions">Dynamic forecasting with interventions</h3>
+<p><code>at.extend_interventions(X, steps=20, *, future_index=None)</code> returns <strong>future rows only</strong>. AO stays zero, LS stays one, and TC decay continues from the original event, without restarting at the forecast origin. It continues existing events; it does not introduce new future events. Regular period, datetime, RangeIndex and equally spaced numerical indexes can continue automatically; otherwise supply an increasing future index. Explicit continuations must match known frequencies.</p>
+<p><code>dynamic_forecast</code>, <code>plot_forecast</code> and <code>plot_fan_chart</code> accept keyword-only <code>exog=None</code> for all future external regressors. DataFrame columns must have the fitted names in the fitted order and match the model’s forecast index; unnamed arrays must have the correct shape and are interpreted in fitted column order. Supply ordinary controls too, when present; built-in trends need no supplied columns. Forecast-error variances are unchanged and condition on the parameters and future regressors. No coefficient, date, decay or model-selection uncertainty is added. Existing missing-history/initialization limitations of innovation-based FEV still apply. Static forecasting and forecast evaluation remain the responsibility of Forecasting-Tools.</p>
+<h2 id="recursive-estimation-and-parameter-stability">Recursive estimation and parameter stability</h2>
+<p><code>at.recursive_estimation()</code> takes the original series and a <code>(p, d, q)</code> order and returns a long-format expanding-window table with estimates, standard errors, intervals, endpoints and convergence status. <code>initial</code> is an observation count, a fraction between zero and one, or <code>None</code> (an automatic 10% rule subject to <code>min_df=20</code>). Ordinary controls and interventions can be supplied through aligned keyword-only <code>exog=</code>. The response must be complete and finite. Windows retain the same specified columns; unidentified windows remain visible with missing estimates and explanatory status rather than silently dropping regressors.</p>
+<p>The intervention example above defines a separate <code>results</code> object. This stability example returns to the earlier ARMA series saved as <code>arma_y</code>:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>recursive <span class="op">=</span> at.recursive_estimation(arma_y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>), initial<span class="op">=</span><span class="dv">220</span>, trend<span class="op">=</span><span class="st">&quot;n&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>stability_plot <span class="op">=</span> at.plot_parameter_stability(recursive, parameters<span class="op">=</span>[<span class="st">&quot;ar.L1&quot;</span>, <span class="st">&quot;ma.L1&quot;</span>])</span></code></pre></div>
+<p><code>at.plot_parameter_stability()</code> takes the recursive table. <code>parameters=None</code> displays all parameters except <code>sigma2</code>; a string or sequence selects parameters. <code>reference=True</code> adds full-sample estimates only when the final window is valid. Captured warnings and failure reasons remain in the table; nonconverged estimates are excluded from the plot. An optional <code>breakpoint</code> is only a graphical marker matching the endpoint index, not a structural-break test.</p>
+<p>Intervals are pointwise, approximate normal intervals, estimate plus/minus the normal critical value times its standard error. Expanding windows overlap, so successive estimates are dependent; these are not simultaneous confidence bands. A changing path can motivate investigation but is not a formal rejection of parameter constancy. A visually stable path does not establish constancy either.</p>
 <h2 id="compact-api-summary">Compact API summary</h2>
-<p>Exact public signatures and principal returns are listed below.
-<code>results</code> and <code>result</code> are the parameter names
-actually used by the API; both denote a fitted Statsmodels result unless
-otherwise specified above. Plot size/title arguments can customize the
-older diagnostic figures; forecast figures use their built-in layout and
-can be edited through the returned Plotly object.</p>
-<table>
+<p>Exact public signatures and principal returns are listed below. <code>results</code> and <code>result</code> are the parameter names actually used by the API; both denote a fitted Statsmodels result unless otherwise specified above. Plot size/title arguments can customize the older diagnostic figures; forecast figures use their built-in layout and can be edited through the returned Plotly object.</p>
+<table class="caption-top">
 <colgroup>
-<col style="width: 50%" />
-<col style="width: 50%" />
+<col style="width: 50%">
+<col style="width: 50%">
 </colgroup>
 <thead>
-<tr>
+<tr class="header">
 <th style="text-align: left;">Public call</th>
 <th style="text-align: left;">Return / contents</th>
 </tr>
 </thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.root_diagnostics(results)</code></td>
 <td style="text-align: left;">DataFrame: AR/MA roots and inverses</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.is_causal(results, tol=1e-10)</code></td>
 <td style="text-align: left;">bool: AR causality</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.is_invertible(results, tol=1e-10)</code></td>
 <td style="text-align: left;">bool: MA invertibility</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.common_roots(results, tol=0.05, exact_tol=1e-10)</code></td>
-<td style="text-align: left;">DataFrame: common/near-common root
-pairs</td>
+<td style="text-align: left;">DataFrame: common/near-common root pairs</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.plot_inverse_roots(results, tol=0.05, exact_tol=1e-10, title=&#39;Inverse Roots&#39;)</code></td>
 <td style="text-align: left;">Figure: inverse roots</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.root_summary(results, tol=0.05, exact_tol=1e-10)</code></td>
 <td style="text-align: left;">Series: root checks</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.coefficient_diagnostics(results, confidence=0.95)</code></td>
 <td style="text-align: left;">DataFrame: estimates and inference</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.parameter_correlation(results, include_variance=False)</code></td>
 <td style="text-align: left;">DataFrame: parameter correlations</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.joint_significance(results, parameters)</code></td>
 <td style="text-align: left;">Series: joint Wald test</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.ljung_box_test(results, lags)</code></td>
 <td style="text-align: left;">DataFrame: adjusted Ljung–Box tests</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.residual_correlations(results, lags=20, confidence=0.95)</code></td>
-<td style="text-align: left;">DataFrame: residual ACF/PACF and
-bounds</td>
+<td style="text-align: left;">DataFrame: residual ACF/PACF and bounds</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.plot_residual_diagnostics(results, lags=20, confidence=0.95, width=1000, height=1200, title=&#39;Residual Diagnostics&#39;)</code></td>
 <td style="text-align: left;">Figure: four residual panels</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.jarque_bera_test(results)</code></td>
 <td style="text-align: left;">Series: normality test and moments</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.dynamic_effects(results, horizon=20)</code></td>
-<td style="text-align: left;">DataFrame: effects and cumulative
-effects</td>
+<td style="text-align: left;">DataFrame: effects and cumulative effects</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.plot_dynamic_effects(results, horizon=20, width=900, height=700, title=&#39;Dynamic Effects of an Innovation&#39;)</code></td>
-<td style="text-align: left;">Figure: effects and cumulative
-effects</td>
+<td style="text-align: left;">Figure: effects and cumulative effects</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.compare_models(*results, names=None)</code></td>
-<td style="text-align: left;">DataFrame: likelihood and information
-criteria</td>
+<td style="text-align: left;">DataFrame: likelihood and information criteria</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.select_model(table, criterion=&#39;BIC&#39;, d=None)</code></td>
 <td style="text-align: left;">Series: selected table row</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.order_search(y, p_max=4, q_max=4, d_min=0, d_max=0, criterion=&#39;BIC&#39;, trend=None, *, exog=None)</code></td>
-<td style="text-align: left;">DataFrame: candidate orders and fit
-status</td>
+<td style="text-align: left;">DataFrame: candidate orders and fit status</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.auto_arima(y, criterion=&#39;BIC&#39;, d=None, max_p=5, max_q=5, stepwise=True, allow_mean=True, allow_drift=True)</code></td>
 <td style="text-align: left;">Fitted StatsForecast AutoARIMA object</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.recursive_estimation(y, order, initial=None, min_df=20, confidence=0.95, trend=None, *, exog=None)</code></td>
-<td style="text-align: left;">DataFrame: recursive estimates and fit
-status</td>
+<td style="text-align: left;">DataFrame: recursive estimates and fit status</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.plot_parameter_stability(recursive, parameters=None, reference=True, breakpoint=None, width=950, height_per_panel=300, title=&#39;Recursive Parameter Stability&#39;)</code></td>
-<td style="text-align: left;">Figure: recursive estimates and
-intervals</td>
+<td style="text-align: left;">Figure: recursive estimates and intervals</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.auto_arima_summary(model)</code></td>
 <td style="text-align: left;">Series: fitted AutoARIMA summary</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.forecast_error_variance(result, steps=20)</code></td>
 <td style="text-align: left;">ndarray: forecast-error variances</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.dynamic_forecast(result, steps=20, level=0.95, *, exog=None)</code></td>
-<td style="text-align: left;">DataFrame: Forecast, FEV, SE, Lower,
-Upper</td>
+<td style="text-align: left;">DataFrame: Forecast, FEV, SE, Lower, Upper</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.plot_forecast(result, steps=20, level=0.95, history=50, *, exog=None)</code></td>
-<td style="text-align: left;">Figure: forecast and unfilled interval
-lines</td>
+<td style="text-align: left;">Figure: forecast and unfilled interval lines</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.plot_fan_chart(result, steps=20, levels=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99), history=50, *, exog=None)</code></td>
-<td style="text-align: left;">Figure: forecast and nested shaded
-intervals</td>
+<td style="text-align: left;">Figure: forecast and nested shaded intervals</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.outlier_regressors(y, dates=None, types=&quot;AO&quot;, delta=0.7, *, positions=None)</code></td>
-<td style="text-align: left;">DataFrame: manual event regressors and
-metadata</td>
+<td style="text-align: left;">DataFrame: manual event regressors and metadata</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.intervention_effects(results, X)</code></td>
-<td style="text-align: left;">DataFrame: observations, contributions,
-combined effect, adjustment</td>
+<td style="text-align: left;">DataFrame: observations, contributions, combined effect, adjustment</td>
 </tr>
-<tr>
+<tr class="odd">
 <td style="text-align: left;"><code>at.plot_interventions(y, X, *, results=None, individual=False, title=&quot;Intervention Effects&quot;)</code></td>
-<td style="text-align: left;">Figure: events, fitted contributions and
-adjustment</td>
+<td style="text-align: left;">Figure: events, fitted contributions and adjustment</td>
 </tr>
-<tr>
+<tr class="even">
 <td style="text-align: left;"><code>at.extend_interventions(X, steps=20, *, future_index=None)</code></td>
 <td style="text-align: left;">DataFrame: future regressor rows</td>
 </tr>
 </tbody>
 </table>
 <h2 id="course-resources-and-author">Course, resources, and author</h2>
-<p><strong>ATSE course material and Labs — Universidad Carlos III de
-Madrid:</strong> public link to be added when available. The course
-material supplies theory; the Labs supply fuller examples and exercises.
-This API reference is not a substitute for either.</p>
+<p><strong>ATSE course material and Labs — Universidad Carlos III de Madrid:</strong> public link to be added when available. The course material supplies theory; the Labs supply fuller examples and exercises. This API reference is not a substitute for either.</p>
 <ul>
-<li><a href="https://github.com/maarranz/ARIMA-Tools">Repository and
-README</a></li>
-<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/ARIMA_Tools_Development.ipynb">Development/demonstration
-notebook</a></li>
-<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">Environment
-specification</a></li>
-<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/LICENSE">MIT
-License</a></li>
+<li><a href="https://github.com/maarranz/ARIMA-Tools">Repository and README</a></li>
+<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/ARIMA_Tools_Development.ipynb">Development/demonstration notebook</a></li>
+<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">Environment specification</a></li>
+<li><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/LICENSE">MIT License</a></li>
 <li><a href="ARIMA_Tools_Documentation.qmd">Quarto source</a></li>
 </ul>
-<p><strong>Miguel A. Arranz, PhD</strong><br />
-Department of Economics<br />
-Universidad Carlos III de Madrid (UC3M)<br />
-Email: <a href="mailto:maarranz@eco.uc3m.es">maarranz@eco.uc3m.es</a><br />
+<p><strong>Miguel A. Arranz, PhD</strong><br>
+Department of Economics<br>
+Universidad Carlos III de Madrid (UC3M)<br>
+Email: <a href="mailto:maarranz@eco.uc3m.es">maarranz@eco.uc3m.es</a><br>
 ORCID: <a href="https://orcid.org/0000-0002-5951-2284">0000-0002-5951-2284</a></p>
 <h3 id="tests-and-execution-scope">Tests and execution scope</h3>
-<p>From the repository root in the activated environment, run
-<code>python -m unittest discover -s tests -v</code>. The examples use
-simulated data and require no downloaded datasets. Figures are returned
-rather than automatically displayed; in Jupyter display the figure or
-call <code>.show()</code>.</p>
-<p>The examples were checked in an existing environment with Python
-3.14.7, Statsmodels 0.15.0 and StatsForecast 2.1.1. The standalone HTML
-build was checked with Quarto 1.10.19. These are tested versions, not
-additional dependency pins.</p>
-<p>This workflow uses a GitHub checkout, not an installed distribution.
-No packaging step is required. Google Colab does not use this local
-mamba environment: clone the repository there, make its root the working
-directory and provide compatible scientific dependencies before
-importing. A complete Colab setup and fresh environment recreation are
-reserved for Stage 4C; neither is validated here.</p>
+<p>From the repository root in the activated environment, run <code>python -m unittest discover -s tests -v</code>. The examples use simulated data and require no downloaded datasets. Figures are returned rather than automatically displayed; in Jupyter display the figure or call <code>.show()</code>.</p>
+<p>The examples were checked in an existing environment with Python 3.14.7, Statsmodels 0.15.0 and StatsForecast 2.1.1. The standalone HTML build was checked with Quarto 1.10.19. These are tested versions, not additional dependency pins.</p>
+<p>This workflow uses a GitHub checkout, not an installed distribution. No packaging step is required. The clean-checkout and fresh-environment checks passed, and hosted Google Colab validation confirmed estimation, diagnostics, dynamic forecasting and Plotly display. Colab uses its hosted environment rather than the local mamba environment; see the <a href="../README.md#google-colab">README Colab setup</a> for the tested commands. Dependency versions may change in future runtimes.</p>
 <h3 id="rebuilding-the-html">Rebuilding the HTML</h3>
-<p>The examples are ordinary Python code blocks: execute them separately
-in a fresh session; rendering does not run them. With Quarto installed
-separately from the Python environment, the standalone build command
-from the repository root is:</p>
-<pre class="bash"><code>quarto pandoc docs/ARIMA_Tools_Documentation.qmd \
-  --from markdown --to html5 --standalone --toc --toc-depth=2 \
-  --embed-resources --mathml --syntax-highlighting=none -o docs/index.html</code></pre>
-<p><code>--mathml</code> renders equations as native MathML in a modern
-browser without an external mathematics script.</p>
-</body>
-</html>
+<p>The examples are ordinary Python code blocks: execute them separately in a fresh session; rendering does not run them. With Quarto installed separately from the Python environment, the standalone build command from the repository root is:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> pandoc docs/ARIMA_Tools_Documentation.qmd <span class="dt">\</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from</span> markdown <span class="at">--to</span> html5 <span class="at">--standalone</span> <span class="at">--toc</span> <span class="at">--toc-depth</span><span class="op">=</span>2 <span class="dt">\</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--embed-resources</span> <span class="at">--mathml</span> <span class="at">--syntax-highlighting</span><span class="op">=</span>none <span class="at">-o</span> docs/index.html</span></code></pre></div>
+<p><code>--mathml</code> renders equations as native MathML in a modern browser without an external mathematics script.</p>
+
+
+
+
+
+</body></html>
