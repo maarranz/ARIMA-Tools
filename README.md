@@ -57,3 +57,63 @@ Department of Economics\
 Universidad Carlos III de Madrid (UC3M)\
 Email: [maarranz@eco.uc3m.es](mailto:maarranz@eco.uc3m.es)\
 ORCID: [https://orcid.org/0000-0002-5951-2284](https://orcid.org/0000-0002-5951-2284)
+
+## Model-selection and diagnostic conventions
+
+`compare_models()` reports candidates; `select_model(table, criterion="BIC", d=None)`
+checks comparability before choosing. Mixed-d tables require an explicit `d`.
+Grid-search tables are grouped by d, with criteria ranked only within each group.
+Eligible models must share ordered response values, missing-value positions,
+original time indexes (including frequency and timezone), effective observations,
+and initialization metadata. Tables without sample fingerprints must be rebuilt
+before selecting among multiple eligible models. Failed, unknown-convergence
+and nonfinite candidates are excluded; duplicate model labels require explicit unique names.
+
+`N` is Statsmodels `nobs_effective`; `Parameters` is `df_model`, including free
+parameters, concentrated innovation scale and exact diffuse state terms.
+AIC/BIC/HQIC use Statsmodels likelihood conventions; AICc uses the same N and k
+and is undefined when N-k-1 <= 0. These conventions can differ numerically from
+R's `forecast::Arima`; cross-engine numerical equality is not assumed.
+
+Residual diagnostics omit initialization periods (the maximum of likelihood burn
+and diffuse periods) and unobserved responses. ACF/PACF and Ljung–Box reject
+interior gaps; Jarque–Bera uses remaining finite residuals and reports the same
+moment convention as its statistic. Ljung–Box counts ordinary and seasonal AR/MA
+coefficients, without subtracting differencing, deterministic terms or variance.
+Recursive estimation rejects missing input rather than closing gaps, records
+warnings/failure reasons, and excludes nonconverged estimates from stability
+plots. A full-sample reference is drawn only for a valid final-window estimate.
+
+Run regression checks from the repository root with
+`python -m unittest discover -s tests -v` in the existing environment.
+
+### Likelihood initialization and optimizer evidence
+
+`compare_models()` remains a reporting function: incompatible candidates can be
+inspected together. It records an `Initialization` signature, an
+`Initialization Status`, fitted initial moments in `Initialization Detail`, and
+`Convergence Status`. `select_model()` enforces these safeguards.
+
+Initialization signatures identify stationary, approximate-diffuse and
+exact-diffuse states. Diffuse means, approximate-diffuse variances and variance
+units must agree; burn-in, diffuse periods and differencing checks still apply.
+Different stationary ARMA state dimensions do not alone prevent comparison.
+Known/custom priors without an established equivalence rule, unavailable metadata
+and unsupported representations are reported but excluded from selection.
+Concentrated-scale filtering expresses approximate-diffuse variance relative to
+innovation scale; mixing that prior with an absolute-variance diffuse prior is
+conservatively rejected. Stationary and compatible exact-diffuse comparisons can
+still mix concentrated and explicitly estimated scale.
+
+Convergence is read from state-space `mle_retvals` and, where present,
+`fit_details.minimize_results.success`, including inner GLS optimizers. Explicit
+failure overrides success, and unknown required convergence (including fixed-count
+GLS iterations) remains unknown. `Converged` is `None` for unknown evidence and
+recognized non-optimizer estimators; `Convergence Status` distinguishes them.
+Recognized Yule-Walker, Burg, innovations and Hannan-Rissanen result structures
+are marked not applicable and remain selectable. That status does not establish
+maximum-likelihood estimation or statistical adequacy.
+
+PACF accepts lags through `floor(T / 2)` for T usable residuals. Both grid and
+recursive estimation retain warnings emitted before a fit fails, alongside its
+failure reason.

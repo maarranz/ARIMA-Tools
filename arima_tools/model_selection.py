@@ -1,11 +1,197 @@
 """Model comparison, order searches, and automatic ARIMA selection."""
 
 import warnings
+import hashlib
+import pickle
+from collections.abc import Mapping
+from statsmodels.tsa.arima.specification import SARIMAXSpecification
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 from statsforecast.models import AutoARIMA
 from statsforecast.arima import arima_string
+
+def _initialization_info(result):
+    """Describe fitted initialization without comparing stationary state sizes.
+
+    Only the standard ARIMA state ordering is recognized. Known/custom state
+    priors have no automatic cross-specification equivalence rule and are reported
+    but excluded from selection. Initial moments come from the filter snapshot,
+    not a parameter-dependent stationary covariance or a guessed default.
+    """
+    unsupported = {"Initialization": None,
+                   "Initialization Status": "Unsupported or unavailable"}
+    try:
+        model = result.model
+        if not isinstance(model, ARIMA) or model.hamilton_representation or model.simple_differencing:
+            return unsupported
+        fitted = result.filter_results
+        init = fitted.initialization
+        size = model.k_states
+        integration = model._k_states_diff
+        regimes = [None] * size
+        configured_variances = [None] * size
+
+        def visit(block, states):
+            kind = block.initialization_type
+            if kind is None:
+                for positions, child in block.blocks.items():
+                    visit(child, tuple(states[int(i)] for i in positions))
+            else:
+                for state in states:
+                    if regimes[state] is not None:
+                        raise ValueError("Overlapping initialization blocks")
+                    regimes[state] = kind
+                    if kind == "approximate_diffuse":
+                        configured_variances[state] = float(block.approximate_diffuse_variance)
+
+        visit(init, tuple(range(size)))
+        mean = np.asarray(fitted.initial_state, dtype=float)
+        covariance = np.asarray(fitted.initial_state_cov, dtype=float)
+        diffuse = (np.zeros_like(covariance) if fitted.initial_diffuse_state_cov is None
+                   else np.asarray(fitted.initial_diffuse_state_cov, dtype=float))
+        if not (np.isfinite(mean).all() and np.isfinite(covariance).all()
+                and np.isfinite(diffuse).all()):
+            return unsupported
+        detail = {"Regimes": tuple(regimes), "Initial Mean": tuple(mean),
+                  "Initial Covariance": tuple(map(tuple, covariance)),
+                  "Initial Diffuse Covariance": tuple(map(tuple, diffuse)),
+                  "Scale Concentrated": bool(fitted.filter_concentrated)}
+        if any(kind not in {"stationary", "diffuse", "approximate_diffuse"}
+               for kind in regimes):
+            return {**unsupported, "Initialization Detail": detail}
+        profile = []
+        for i, kind in enumerate(regimes):
+            if kind == "stationary":
+                profile.append((kind,))
+                continue
+            # Supported diffuse blocks are independent with diagonal priors.
+            # Retain the fitted mean and variance even when burn-in is positive.
+            others = [j for j in range(size) if j != i]
+            if (np.any(covariance[i, others] != 0)
+                    or np.any(diffuse[i, others] != 0)):
+                return unsupported
+            variance = float(covariance[i, i])
+            # Concentrated filtering stores moments in fitted scale units;
+            # compare the initializer's variance convention before that scaling.
+            if fitted.filter_concentrated:
+                if not np.isfinite(fitted.scale) or fitted.scale <= 0:
+                    return unsupported
+                variance /= float(fitted.scale)
+            if kind == "approximate_diffuse":
+                configured = configured_variances[i]
+                if (variance <= 0 or diffuse[i, i] != 0
+                        or not np.isclose(variance, configured, rtol=1e-12, atol=0)):
+                    return unsupported
+                # Use the exact configured value after checking the snapshot;
+                # scale multiplication/division can introduce rounding noise.
+                variance = configured
+            if kind == "diffuse" and (diffuse[i, i] != 1 or variance != 0):
+                return unsupported
+            entry = (kind, float(mean[i]), variance)
+            if kind == "approximate_diffuse":
+                # Relative and absolute diffuse variances are different priors,
+                # even if both have the same numeric initializer setting.
+                entry += ("relative to scale" if fitted.filter_concentrated else "absolute",)
+            profile.append(entry)
+        integrated = tuple(profile[:integration])
+        arma = tuple(profile[integration:])
+        # Stationary ARMA states may have different dimensions across p and q.
+        # Diffuse ARMA states retain dimension because their likelihood
+        # normalization changes with the number of diffuse directions.
+        if arma and all(state == ("stationary",) for state in arma):
+            arma = (("stationary",),)
+        return {"Initialization": (integrated, arma),
+                "Initialization Status": "Supported",
+                "Initialization Detail": detail}
+    except (AttributeError, TypeError, ValueError, IndexError, KeyError):
+        return unsupported
+
+
+def _sample_info(result):
+    """Fingerprint ordered response, missing positions and original time labels."""
+    response = result.model.data.orig_endog
+    if response is None:
+        raise ValueError("The estimation sample cannot be recovered.")
+    values = np.asarray(response, dtype=float).reshape(-1).copy()
+    values[np.isnan(values)] = np.nan
+    index = result.model.data.row_labels
+    # Include index class, frequency and timezone, not response/column names.
+    labels = None if index is None else (
+        type(index).__name__, str(index.dtype), getattr(index, "freqstr", None),
+        str(getattr(index, "tz", None)), tuple(index.tolist()))
+    identity = (values.shape, values.tobytes(), labels,
+                tuple(getattr(result.model.data, "missing_row_idx", [])))
+    sample_id = hashlib.sha256(pickle.dumps(identity, protocol=4)).hexdigest()
+    burn = int(result.loglikelihood_burn)
+    return {"Sample ID": sample_id, "Start": index[0] if index is not None else 0,
+            "End": index[-1] if index is not None else len(values) - 1,
+            "Burn": burn, "Diffuse": int(result.nobs_diffuse),
+            "Seasonal Differencing": (result.model.seasonal_order[1],
+                                       result.model.seasonal_order[3])}
+
+
+def _ic_values(result):
+    # Statsmodels counts free parameters, concentrated scale and diffuse states.
+    # Use its likelihood convention consistently for all four criteria.
+    n, k = int(result.nobs_effective), int(result.df_model)
+    denominator = n - k - 1
+    return {"N": n, "Parameters": k, "Log Likelihood": float(result.llf),
+            "AIC": float(result.aic),
+            "AICc": float(result.aic + 2*k*(k+1)/denominator) if denominator > 0 else np.nan,
+            "BIC": float(result.bic), "HQIC": float(result.hqic)}
+
+
+def _convergence_info(result):
+    """Return explicit convergence evidence, N/A, or unknown conservatively."""
+    evidence = []
+
+    def flag(value):
+        return bool(value) if isinstance(value, (bool, np.bool_)) else None
+
+    retvals = getattr(result, "mle_retvals", None)
+    if isinstance(retvals, Mapping):
+        evidence.append(flag(retvals.get("converged")))
+    details = getattr(result, "fit_details", None)
+
+    def inspect_details(details):
+        if not isinstance(details, Mapping):
+            return
+        if "minimize_results" in details:
+            evidence.append(flag(getattr(details["minimize_results"], "success", None)))
+        if "converged" in details:
+            evidence.append(flag(details["converged"]))
+        if "statespace_results" in details:
+            inner_retvals = getattr(details["statespace_results"], "mle_retvals", None)
+            evidence.append(flag(inner_retvals.get("converged"))
+                            if isinstance(inner_retvals, Mapping) else None)
+        # GLS may contain inner innovations-MLE or state-space optimizers.
+        for inner in details.get("arma_results", []):
+            inspect_details(inner)
+        if "mle_retvals" in details:
+            inner = details["mle_retvals"]
+            evidence.append(flag(inner.get("converged")) if isinstance(inner, Mapping) else None)
+
+    inspect_details(details)
+    if evidence:
+        if False in evidence:
+            return False, "Not converged"
+        if None in evidence:
+            return None, "Unknown"
+        return True, "Converged"
+    # These are the documented ancillary-result shapes for Yule-Walker,
+    # Burg, innovations and Hannan-Rissanen: no optimizer is involved.
+    if (isinstance(details, Mapping)
+            and isinstance(details.get("spec"), SARIMAXSpecification)
+            and set(details) in ({"spec"}, {"spec", "initial_ar_order", "resid"})):
+        return None, "Not applicable (non-optimizer estimator)"
+    return None, "Unknown"
+
+
+def _converged(result):
+    return _convergence_info(result)[0]
+
+
 
 def compare_models(*results, names=None):
     """
@@ -35,8 +221,15 @@ def compare_models(*results, names=None):
     where k is the number of estimated parameters and n is the number
     of observations used in estimation.
 
-    Information criteria should only be compared across models
-    estimated on the same dependent variable and sample.
+    Comparison reports models without choosing among them. Sample identity,
+    differencing, convergence and likelihood metadata let select_model enforce
+    comparability. N is Statsmodels nobs_effective and Parameters is df_model
+    (free parameters plus concentrated scale and exact diffuse state terms).
+    Initialization signatures preserve standard ARIMA integration conventions
+    while allowing different stationary state dimensions. Known/custom priors
+    without an equivalence rule are reported as unsupported. Convergence Status
+    distinguishes optimizer success/failure, non-optimizer estimators and unknown
+    evidence. Numerical differences from R likelihood initialization are expected.
     """
 
     if len(results) < 2:
@@ -58,37 +251,16 @@ def compare_models(*results, names=None):
     for i, result in enumerate(results):
 
         order = tuple(result.model.order)
-        nobs = int(result.nobs)
-        k = len(result.params)
+        label = f"ARIMA{order}" if names is None else names[i]
+        converged, convergence_status = _convergence_info(result)
+        rows.append({"Model": label, "Order": order, "d": order[1],
+                     **_ic_values(result), **_sample_info(result),
+                     **_initialization_info(result),
+                     "Converged": converged,
+                     "Convergence Status": convergence_status})
 
-        if names is None:
-            label = f"ARIMA{order}"
-        else:
-            label = names[i]
-
-        denominator = nobs - k - 1
-
-        if denominator > 0:
-            aicc = (
-                result.aic
-                + (2 * k * (k + 1)) / denominator
-            )
-        else:
-            aicc = np.nan
-
-        rows.append(
-            {
-                "Model": label,
-                "Order": order,
-                "N": nobs,
-                "Parameters": k,
-                "Log Likelihood": float(result.llf),
-                "AIC": float(result.aic),
-                "AICc": float(aicc),
-                "BIC": float(result.bic),
-                "HQIC": float(result.hqic),
-            }
-        )
+    if len({row["Model"] for row in rows}) != len(rows):
+        raise ValueError("Model names must be unique; supply names for repeated orders.")
 
     table = pd.DataFrame(rows)
 
@@ -146,7 +318,7 @@ def order_search(
     nonseasonal ARIMA(p,d,q) model space.
 
     All four information criteria are reported regardless of the
-    criterion used for sorting.
+    criterion used for sorting within each differencing order.
 
     Estimation warnings generated during the grid search are
     suppressed locally so that repeated starting-value and
@@ -175,7 +347,7 @@ def order_search(
         (d_min, "d_min"),
         (d_max, "d_max"),
     ]:
-        if not isinstance(value, (int, np.integer)) or value < 0:
+        if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)) or value < 0:
             raise ValueError(
                 f"{name} must be a non-negative integer."
             )
@@ -219,11 +391,12 @@ def order_search(
 
                 order = (p, d, q)
 
+                caught = []
                 try:
                     # Suppress repetitive statsmodels warnings only
                     # during estimation of this candidate model.
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
+                    with warnings.catch_warnings(record=True) as caught:
+                        warnings.simplefilter("always")
 
                         model = ARIMA(
                             y,
@@ -237,34 +410,8 @@ def order_search(
                     # Number of observations and parameters
                     # ------------------------------------------------
 
-                    nobs = int(result.nobs)
-                    k = len(result.params)
-
-                    # ------------------------------------------------
-                    # AICc
-                    # ------------------------------------------------
-
-                    denominator = nobs - k - 1
-
-                    if denominator > 0:
-                        aicc = (
-                            result.aic
-                            + (2 * k * (k + 1))
-                            / denominator
-                        )
-                    else:
-                        aicc = np.nan
-
-                    # ------------------------------------------------
-                    # Convergence information
-                    # ------------------------------------------------
-
-                    converged = bool(
-                        result.mle_retvals.get(
-                            "converged",
-                            True,
-                        )
-                    )
+                    ic = _ic_values(result)
+                    converged, convergence_status = _convergence_info(result)
 
                     rows.append(
                         {
@@ -272,28 +419,16 @@ def order_search(
                             "p": p,
                             "d": d,
                             "q": q,
-                            "N": nobs,
-                            "Parameters": k,
-                            "Log Likelihood": float(
-                                result.llf
-                            ),
-                            "AIC": float(
-                                result.aic
-                            ),
-                            "AICc": float(
-                                aicc
-                            ),
-                            "BIC": float(
-                                result.bic
-                            ),
-                            "HQIC": float(
-                                result.hqic
-                            ),
+                            **ic,
+                            **_sample_info(result),
+                            **_initialization_info(result),
+                            "Convergence Status": convergence_status,
+                            "Warnings": tuple(str(w.message) for w in caught),
                             "Converged": converged,
                             "Status": (
                                 "OK"
                                 if converged
-                                else "Not converged"
+                                else convergence_status
                             ),
                         }
                     )
@@ -313,7 +448,9 @@ def order_search(
                             "AICc": np.nan,
                             "BIC": np.nan,
                             "HQIC": np.nan,
+                            "Warnings": tuple(str(w.message) for w in caught),
                             "Converged": False,
+                            "Convergence Status": "Fit failed",
                             "Status": (
                                 f"Failed: "
                                 f"{type(exc).__name__}: {exc}"
@@ -330,20 +467,20 @@ def order_search(
     # ------------------------------------------------------------
     # Sort results
     #
-    # Converged models first, ordered by the selected IC.
+    # Group by d; converged models first within each group.
     # Non-converged and failed models remain visible at the bottom.
     # ------------------------------------------------------------
 
     table = table.sort_values(
-        by=["Converged", criterion_column],
-        ascending=[False, True],
+        by=["d", "Converged", criterion_column],
+        ascending=[True, False, True],
         na_position="last",
     ).reset_index(drop=True)
 
     return table
 
 
-def select_model(table, criterion="BIC"):
+def select_model(table, criterion="BIC", d=None):
     """
     Select the model minimizing a chosen information criterion.
 
@@ -353,6 +490,8 @@ def select_model(table, criterion="BIC"):
         Model comparison or order-search table.
     criterion : {"AIC", "AICc", "BIC", "HQIC"}, default "BIC"
         Information criterion used for model selection.
+    d : int or None, default None
+        Differencing order to select within; required for mixed-d tables.
 
     Returns
     -------
@@ -362,8 +501,14 @@ def select_model(table, criterion="BIC"):
 
     Notes
     -----
-    If the table contains a 'Converged' column, non-converged models
-    are excluded from selection.
+    Failed, unknown-convergence and non-finite candidates are excluded.
+    Recognized non-optimizer estimators are marked not applicable rather than
+    converged; they remain eligible. Unsupported initialization is excluded.
+    Mixed-d tables
+    require d. Eligible models must have identical response values, ordering,
+    missing positions and time labels, effective N and initialization metadata.
+    Legacy tables without sample identity cannot establish comparability for
+    multiple eligible models; rebuild them with compare_models/order_search.
 
     This function identifies the minimum information criterion. It
     does not imply that the selected model is adequate in terms of
@@ -392,25 +537,38 @@ def select_model(table, criterion="BIC"):
             f"The table does not contain a '{column}' column."
         )
 
+    if not table.index.is_unique:
+        raise ValueError("Model table index must be unique.")
     eligible = table.copy()
-
-    # Exclude non-converged models when convergence information
-    # is available.
-    if "Converged" in eligible.columns:
-        eligible = eligible[eligible["Converged"]]
-
-    # Keep only finite values of the selected criterion.
-    eligible = eligible[np.isfinite(eligible[column])]
-
+    orders = eligible["d"] if "d" in eligible else (
+        eligible["Order"].map(lambda order: order[1]) if "Order" in eligible else None)
+    if d is not None:
+        if isinstance(d, (bool, np.bool_)) or not isinstance(d, (int, np.integer)) or d < 0:
+            raise ValueError("d must be a non-negative integer.")
+        if orders is None:
+            raise ValueError("The table has no differencing-order information.")
+        eligible = eligible.loc[orders == d]
+    elif orders is not None and orders.dropna().nunique() > 1:
+        raise ValueError("Models have different differencing orders; choose d explicitly.")
+    if "Converged" in eligible:
+        confirmed = eligible["Converged"].eq(True).fillna(False)
+        if "Convergence Status" in eligible:
+            confirmed |= eligible["Convergence Status"].eq(
+                "Not applicable (non-optimizer estimator)")
+        eligible = eligible.loc[confirmed]
+    eligible = eligible.loc[np.isfinite(eligible[column])]
     if eligible.empty:
-        raise ValueError(
-            f"No eligible models with finite {column} values "
-            "are available."
-        )
+        raise ValueError(f"No eligible models with finite {column} values are available.")
+    if len(eligible) > 1 and "Sample ID" not in eligible:
+        raise ValueError("Sample identity is unavailable; rebuild the table with compare_models/order_search.")
+    if ("Initialization" not in eligible or "Initialization Status" not in eligible
+            or not eligible["Initialization Status"].eq("Supported").all()):
+        raise ValueError("Likelihood initialization is unsupported or unavailable; comparability cannot be established.")
+    for field in ("Initialization", "Sample ID", "N", "Burn", "Diffuse", "Seasonal Differencing"):
+        if field in eligible and (eligible[field].isna().any() or eligible[field].nunique() != 1):
+            raise ValueError(f"Models do not have the same sample/likelihood basis ({field}).")
+    return eligible.loc[eligible[column].idxmin()]
 
-    model_index = eligible[column].idxmin()
-
-    return table.loc[model_index]
 
 
 def auto_arima(
@@ -485,7 +643,7 @@ def auto_arima(
         (max_p, "max_p"),
         (max_q, "max_q"),
     ]:
-        if not isinstance(value, (int, np.integer)) or value < 0:
+        if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)) or value < 0:
             raise ValueError(
                 f"{name} must be a non-negative integer."
             )

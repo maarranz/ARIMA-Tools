@@ -9,6 +9,30 @@ from statsmodels.tsa.stattools import acf, pacf
 from statsmodels.tsa.arima.model import ARIMA
 from plotly.subplots import make_subplots
 from scipy.stats import norm, jarque_bera, skew, kurtosis
+from .model_selection import _convergence_info
+
+def _residual_sample(results, consecutive=True):
+    """Exclude initialization and unobserved responses without closing gaps."""
+    residuals = np.asarray(results.resid, dtype=float).reshape(-1).copy()
+    observed = np.asarray(results.model.endog, dtype=float).reshape(-1)
+    residuals[~np.isfinite(observed)] = np.nan
+    burn = max(int(getattr(results, "loglikelihood_burn", 0)),
+               int(getattr(results, "nobs_diffuse", 0)))
+    residuals[:burn] = np.nan
+    finite = np.flatnonzero(np.isfinite(residuals))
+    if not len(finite):
+        raise ValueError("The model has no finite residuals after initialization.")
+    if consecutive and not np.isfinite(residuals[finite[0]:finite[-1]+1]).all():
+        raise ValueError("Residuals have interior gaps; lag diagnostics require consecutive observations.")
+    index = getattr(results.resid, "index", pd.RangeIndex(len(residuals)))
+    return pd.Series(residuals[finite], index=index[finite])
+
+
+def _count(value, name, minimum=1):
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)) or value < minimum:
+        raise ValueError(f"{name} must be an integer >= {minimum}.")
+    return int(value)
+
 
 def ljung_box_test(results, lags):
     """
@@ -37,34 +61,36 @@ def ljung_box_test(results, lags):
 
         df = h - p - q
 
-    where h is the Ljung-Box lag.
+    where h is the Ljung-Box lag. Seasonal AR/MA coefficients are also
+    counted when present; differencing, mean and variance are not deducted.
+
+    Initialization residuals are excluded. Interior missing observations are
+    rejected rather than joined across gaps.
 
     Tests with nonpositive degrees of freedom are not defined and
     therefore cannot be computed.
     """
 
-    if np.isscalar(lags):
-        lags = [int(lags)]
-    else:
-        lags = [int(lag) for lag in lags]
-
-    if any(lag <= 0 for lag in lags):
-        raise ValueError("All lags must be positive integers.")
-
-    p = results.model.order[0]
-    q = results.model.order[2]
-    model_df = p + q
+    lags = [lags] if np.isscalar(lags) else list(lags)
+    if not lags:
+        raise ValueError("Supply at least one lag.")
+    lags = [_count(lag, "lags") for lag in lags]
+    residuals = _residual_sample(results)
+    if max(lags) >= len(residuals):
+        raise ValueError("lags must be smaller than the residual sample.")
+    model_df = (len(results.arparams) + len(results.maparams)
+                + len(results.seasonalarparams) + len(results.seasonalmaparams))
 
     invalid_lags = [lag for lag in lags if lag <= model_df]
 
     if invalid_lags:
         raise ValueError(
-            f"Ljung-Box lags must be greater than p + q = {model_df}. "
+            f"Ljung-Box lags must exceed the fitted AR/MA count = {model_df}. "
             f"Invalid lag(s): {invalid_lags}"
         )
 
     lb = acorr_ljungbox(
-        results.resid,
+        residuals,
         lags=lags,
         model_df=model_df,
         return_df=True,
@@ -125,23 +151,22 @@ def residual_correlations(results, lags=20, confidence=0.95):
     These are individual approximate bounds for inspecting the
     correlogram. They are not a joint test of residual autocorrelation.
     The Ljung-Box test should be used for joint testing.
+    lags may be at most floor(T / 2), following Statsmodels PACF validation.
     """
 
-    if not isinstance(lags, (int, np.integer)) or lags <= 0:
-        raise ValueError("lags must be a positive integer.")
+    lags = _count(lags, "lags")
 
     if not 0 < confidence < 1:
         raise ValueError("confidence must lie strictly between 0 and 1.")
 
-    residuals = np.asarray(results.resid)
-    residuals = residuals[np.isfinite(residuals)]
+    residuals = _residual_sample(results).to_numpy()
 
     nobs = len(residuals)
 
-    if lags >= nobs:
+    if lags > nobs // 2:
         raise ValueError(
-            f"lags must be smaller than the number of residual "
-            f"observations ({nobs})."
+            f"lags must not exceed floor(T / 2) = {nobs // 2}, "
+            f"where T = {nobs} usable residual observations."
         )
 
     acf_values = acf(
@@ -235,7 +260,7 @@ def plot_residual_diagnostics(
         confidence=confidence,
     )
 
-    residuals = pd.Series(results.resid).dropna()
+    residuals = _residual_sample(results)
 
     lag_values = correlations["Lag"].to_numpy()
     acf_values = correlations["ACF"].to_numpy()
@@ -245,9 +270,8 @@ def plot_residual_diagnostics(
     upper = correlations["Upper Bound"].iloc[0]
 
     # Ljung-Box tests are defined only when h > p + q.
-    p = results.model.order[0]
-    q = results.model.order[2]
-    first_lb_lag = p + q + 1
+    first_lb_lag = (len(results.arparams) + len(results.maparams)
+                    + len(results.seasonalarparams) + len(results.seasonalmaparams) + 1)
 
     if first_lb_lag <= lags:
         lb_lags = list(range(first_lb_lag, lags + 1))
@@ -586,12 +610,14 @@ def jarque_bera_test(results):
 
     Skewness and kurtosis are reported alongside the test statistic
     to help identify the source of departures from normality.
+    Reported moments use the same biased moment convention as SciPy
+    jarque_bera, so they reproduce the statistic. Initialization observations
+    are excluded; remaining finite residuals are used.
     Kurtosis is reported in the conventional form for which the
     Normal distribution has kurtosis equal to 3.
     """
 
-    residuals = np.asarray(results.resid)
-    residuals = residuals[np.isfinite(residuals)]
+    residuals = _residual_sample(results, consecutive=False).to_numpy()
 
     if residuals.size < 3:
         raise ValueError(
@@ -602,13 +628,13 @@ def jarque_bera_test(results):
 
     residual_skewness = skew(
         residuals,
-        bias=False,
+        bias=True,
     )
 
     residual_kurtosis = kurtosis(
         residuals,
         fisher=False,
-        bias=False,
+        bias=True,
     )
 
     return pd.Series(
@@ -926,7 +952,8 @@ def recursive_estimation(
     sample is reached.
 
     Routine statsmodels estimation warnings are suppressed locally.
-    Actual convergence status is retained in the output.
+    Actual convergence status, captured warnings and failure reasons are retained.
+    Missing observations and non-increasing or duplicate indices are rejected.
 
     The automatic initial window uses a 10 percent starting fraction
     subject to a degrees-of-freedom safeguard.
@@ -957,15 +984,17 @@ def recursive_estimation(
     # ------------------------------------------------------------
 
     if isinstance(y, pd.Series):
-        y_series = y.dropna().copy()
+        y_series = y.copy()
     else:
         y_array = np.asarray(y, dtype=float)
 
         if y_array.ndim != 1:
             raise ValueError("y must be one-dimensional.")
 
-        y_series = pd.Series(y_array).dropna()
+        y_series = pd.Series(y_array)
 
+    if not y_series.index.is_unique or not y_series.index.is_monotonic_increasing:
+        raise ValueError("y index must be unique and increasing.")
     if not np.all(np.isfinite(y_series.to_numpy(dtype=float))):
         raise ValueError(
             "y must contain only finite observations."
@@ -996,16 +1025,7 @@ def recursive_estimation(
     # deterministic term    : depends on trend
     # ------------------------------------------------------------
 
-    k = p + q + 1
-
-    if trend is not None and trend != "n":
-        k += 1
-
-    # statsmodels default trend:
-    # d = 0 -> constant
-    # d > 0 -> no constant
-    if trend is None and d == 0:
-        k += 1
+    k = ARIMA(y_series, order=tuple(order), trend=trend).k_params
 
     # Differencing reduces the effective information available
     # in the initial sample.
@@ -1087,9 +1107,10 @@ def recursive_estimation(
         sample = y_series.iloc[:end]
         endpoint = sample.index[-1]
 
+        caught = []
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
 
                 model = ARIMA(
                     sample,
@@ -1099,9 +1120,7 @@ def recursive_estimation(
 
                 result = model.fit()
 
-            converged = bool(
-                result.mle_retvals.get("converged", True)
-            )
+            converged, convergence_status = _convergence_info(result)
 
             params = pd.Series(
                 np.asarray(result.params),
@@ -1131,11 +1150,13 @@ def recursive_estimation(
                         "Upper CI": (
                             estimate + critical * std_error
                         ),
+                        "Warnings": tuple(str(w.message) for w in caught),
                         "Converged": converged,
+                        "Status": "OK" if converged else convergence_status,
                     }
                 )
 
-        except Exception:
+        except Exception as exc:
             # Keep the recursive endpoint visible even when
             # estimation fails.
             rows.append(
@@ -1147,7 +1168,9 @@ def recursive_estimation(
                     "Std. Error": np.nan,
                     "Lower CI": np.nan,
                     "Upper CI": np.nan,
+                    "Warnings": tuple(str(w.message) for w in caught),
                     "Converged": False,
+                    "Status": f"Failed: {type(exc).__name__}: {exc}",
                 }
             )
 
@@ -1331,6 +1354,8 @@ def plot_parameter_stability(
             .copy()
         )
 
+        data.loc[~data["Converged"].fillna(False).astype(bool),
+                 ["Estimate", "Lower CI", "Upper CI"]] = np.nan
         x = data["Endpoint"]
         estimate = data["Estimate"]
         lower = data["Lower CI"]
@@ -1400,7 +1425,7 @@ def plot_parameter_stability(
                 data["Estimate"].notna()
             ]
 
-            if not valid.empty:
+            if not valid.empty and valid.iloc[-1]["N"] == recursive["N"].max():
 
                 full_sample = float(
                     valid.iloc[-1]["Estimate"]

@@ -367,15 +367,18 @@ def plot_inverse_roots(
         ),
     )
 
+    inverse = np.concatenate([ar_inverse, ma_inverse])
+    finite = inverse[np.isfinite(inverse)]
+    extent = max(1.1, 1.1 * np.max(np.abs(finite))) if finite.size else 1.1
     fig.update_xaxes(
-        range=[-1.1, 1.1],
+        range=[-extent, extent],
         scaleanchor="y",
         scaleratio=1,
         zeroline=False,
     )
 
     fig.update_yaxes(
-        range=[-1.1, 1.1],
+        range=[-extent, extent],
         zeroline=False,
     )
 
@@ -422,7 +425,10 @@ def root_summary(results, tol=0.05, exact_tol=1e-10):
 
     n_common = 0
     n_near_common = 0
-    min_distance = np.nan
+    ar = np.asarray(results.arroots)
+    ma = np.asarray(results.maroots)
+    min_distance = (float(np.min(np.abs(1 / ar[:, None] - 1 / ma[None, :])))
+                    if ar.size and ma.size else np.nan)
 
     if not pairs.empty:
         n_common = int(
@@ -433,7 +439,6 @@ def root_summary(results, tol=0.05, exact_tol=1e-10):
             (pairs["Classification"] == "Near-common").sum()
         )
 
-        min_distance = pairs["Distance"].min()
 
     return pd.Series(
         {

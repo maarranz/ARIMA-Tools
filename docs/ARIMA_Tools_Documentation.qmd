@@ -117,7 +117,7 @@ root_plot = at.plot_inverse_roots(result)
 
 ### Residual behavior
 
-`at.ljung_box_test()` requires a lag or sequence of lags greater than `p + q`, and reports adjusted degrees of freedom and p-values. `at.residual_correlations()` returns residual ACF/PACF values and approximate individual white-noise bounds; these bounds are not a joint test. Its lag limit must be smaller than the residual sample, with the additional PACF restrictions imposed by Statsmodels.
+`at.ljung_box_test()` requires a lag or sequence of lags greater than the ordinary plus seasonal AR/MA coefficient count, and reports adjusted degrees of freedom and p-values. `at.residual_correlations()` returns residual ACF/PACF values and approximate individual white-noise bounds; these bounds are not a joint test. Its maximum lag is `floor(T / 2)`, where T is the usable residual sample size.
 
 `at.jarque_bera_test()` returns the normality statistic, p-value, skewness, and conventional kurtosis. `at.plot_residual_diagnostics()` combines residuals, ACF, PACF, and valid-lag Ljung–Box p-values in a four-panel figure.
 
@@ -129,6 +129,47 @@ residual_plot = at.plot_residual_diagnostics(result, lags=20)
 ```
 
 ## Model comparison and selection
+
+Selection requires identical ordered response values, missing positions and time
+indexes, effective sample size and initialization metadata. Supply `d=` when a
+table contains more than one differencing order. Search output is grouped by d.
+`N` and parameter counts follow Statsmodels `nobs_effective` and `df_model`,
+including concentrated scale and exact diffuse terms; numerical equality with R
+is not assumed. Rebuild older tables without sample identity metadata.
+
+
+### Initialization and convergence safeguards
+
+`compare_models()` reports candidates without rejecting incompatible samples or
+initializations; `select_model()` enforces comparability. The comparison table
+includes `Initialization`, `Initialization Status`, `Initialization Detail` and
+`Convergence Status`. Unsupported or unavailable initialization metadata prevents
+selection; rebuild older tables lacking these safeguards.
+
+Signatures distinguish stationary, approximate-diffuse and exact-diffuse
+initialization. They retain diffuse means, approximate-diffuse variance and its
+units. Burn-in, diffuse periods and differencing must also agree. Stationary
+state dimensions and their model-dependent covariances need not be identical,
+so ordinary ARIMA specifications with different state-space sizes remain
+comparable. Known/custom state priors and unsupported representations have no
+automatic equivalence rule and are conservatively excluded from selection.
+Concentrated filtering scales approximate-diffuse variance by innovation scale;
+its variance convention cannot be mixed with absolute diffuse variance.
+Stationary and compatible exact-diffuse fits may mix concentrated and explicit
+scale estimation. Numerical equality with R is not assumed.
+
+Convergence uses state-space `mle_retvals` and
+`fit_details.minimize_results.success` where applicable, including GLS inner
+optimizers. Any explicit failure excludes the fit; unknown required convergence
+also excludes it. `Converged=None` distinguishes absent optimizer evidence from
+success, with `Convergence Status` separating unknown evidence from recognized
+non-optimizer estimators (Yule-Walker, Burg, innovations, Hannan-Rissanen).
+The latter remain eligible, but a not-applicable optimizer status does not imply
+maximum-likelihood estimation or model adequacy.
+
+Grid and recursive estimation retain warnings even when a fit raises an
+exception, alongside the failure message.
+
 
 `at.compare_models()` accepts at least two fitted models and optional distinct `names`. Its table includes likelihood, AIC, AICc, BIC, and HQIC. Compare models for the same dependent variable and sample.
 
@@ -148,6 +189,12 @@ print(selected)
 automatic = at.auto_arima(y, criterion="BIC", max_p=2, max_q=2)
 automatic_summary = at.auto_arima_summary(automatic)
 ```
+
+Residual diagnostics exclude initialization periods and unobserved responses.
+Lag diagnostics reject interior gaps. Jarque–Bera's displayed moments reproduce
+its statistic. Recursive estimation rejects missing observations, retains failure
+reasons and captured warnings, and plots converged estimates only; a full-sample
+reference requires a valid final-window estimate.
 
 ## Dynamic effects and parameter stability
 
@@ -211,7 +258,7 @@ Exact public signatures and principal returns are listed below. `results` and `r
 | `at.dynamic_effects(results, horizon=20)` | DataFrame: effects and cumulative effects |
 | `at.plot_dynamic_effects(results, horizon=20, width=900, height=700, title='Dynamic Effects of an Innovation')` | Figure: effects and cumulative effects |
 | `at.compare_models(*results, names=None)` | DataFrame: likelihood and information criteria |
-| `at.select_model(table, criterion='BIC')` | Series: selected table row |
+| `at.select_model(table, criterion='BIC', d=None)` | Series: selected table row |
 | `at.order_search(y, p_max=4, q_max=4, d_min=0, d_max=0, criterion='BIC', trend=None)` | DataFrame: candidate orders and fit status |
 | `at.auto_arima(y, criterion='BIC', d=None, max_p=5, max_q=5, stepwise=True, allow_mean=True, allow_drift=True)` | Fitted StatsForecast AutoARIMA object |
 | `at.recursive_estimation(y, order, initial=None, min_df=20, confidence=0.95, trend=None)` | DataFrame: recursive estimates and fit status |
