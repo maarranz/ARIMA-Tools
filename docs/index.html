@@ -109,13 +109,14 @@ table { font-size: 0.88rem; }
   <li><a href="#model-comparison-and-selection" id="toc-model-comparison-and-selection">Model comparison and selection</a></li>
   <li><a href="#dynamic-effects-and-parameter-stability" id="toc-dynamic-effects-and-parameter-stability">Dynamic effects and parameter stability</a></li>
   <li><a href="#forecasting" id="toc-forecasting">Forecasting</a></li>
+  <li><a href="#manual-intervention-modelling" id="toc-manual-intervention-modelling">Manual intervention modelling</a></li>
   <li><a href="#compact-api-summary" id="toc-compact-api-summary">Compact API summary</a></li>
   <li><a href="#course-resources-and-author" id="toc-course-resources-and-author">Course, resources, and author</a></li>
   </ul>
 </nav>
 <h2 id="overview-and-purpose">Overview and purpose</h2>
 <p>ARIMA-Tools was developed for the <strong>Applied Time Series Econometrics (ATSE)</strong> course at <strong>Universidad Carlos III de Madrid</strong>. It complements Statsmodels and StatsForecast with teaching-oriented tables, summaries, numerical forecasts, and interactive Plotly figures.</p>
-<p>This document describes the software/API. The ATSE course material provides the econometric theory; the Labs provide fuller worked examples and exercises. The package currently exposes <strong>26 public functions</strong> through a deliberately flat API: use <code>import arima_tools as at</code> and call <code>at.function(...)</code>. Internal modules organize the implementation; users do not need submodule imports.</p>
+<p>This document describes the software/API. The ATSE course material provides the econometric theory; the Labs provide fuller worked examples and exercises. The package currently exposes <strong>30 public functions</strong> through a deliberately flat API: use <code>import arima_tools as at</code> and call <code>at.function(...)</code>. Internal modules organize the implementation; users do not need submodule imports.</p>
 <p>Diagnostics have three layers: parameters and model structure, residual behavior, and model behavior (dynamics and parameter stability). These concepts overlap the implementation modules.</p>
 <h2 id="installation-environment-and-import">Installation, environment, and import</h2>
 <p>From the repository root, recreate the environment only if needed:</p>
@@ -197,13 +198,99 @@ table { font-size: 0.88rem; }
 <li><code>at.plot_fan_chart()</code> returns a figure with nested shaded central intervals, stronger centrally and fading outward, and a clear point forecast.</li>
 </ul>
 <div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fev <span class="op">=</span> at.forecast_error_variance(result, steps<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> at.dynamic_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>forecast_plot <span class="op">=</span> at.plot_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>, history<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> at.dynamic_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>, <span class="op">*</span>, exog<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>forecast_plot <span class="op">=</span> at.plot_forecast(result, steps<span class="op">=</span><span class="dv">20</span>, level<span class="op">=</span><span class="fl">0.95</span>, history<span class="op">=</span><span class="dv">50</span>, <span class="op">*</span>, exog<span class="op">=</span><span class="va">None</span>)</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>fan_plot <span class="op">=</span> at.plot_fan_chart(result, steps<span class="op">=</span><span class="dv">20</span>, history<span class="op">=</span><span class="dv">50</span>)</span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(forecast.head().<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div>
 <p>The default fan levels are exactly <strong><code>(0.50, 0.70, 0.80, 0.90, 0.95, 0.99)</code></strong>. Custom levels must be nonempty, distinct, and strictly between zero and one; input order does not matter. In both plots, <code>history=50</code> shows the final 50 observations, <code>history=None</code> shows the entire sample, and a larger request shows all available observations. Positive integer histories are required otherwise. Supported time indices continue into the forecast; period indices display period-start dates. Unsupported indices use observation positions if Statsmodels can produce the forecast; its forecasting errors propagate.</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>custom_fan <span class="op">=</span> at.plot_fan_chart(result, steps<span class="op">=</span><span class="dv">12</span>, levels<span class="op">=</span>(<span class="fl">0.95</span>, <span class="fl">0.50</span>, <span class="fl">0.80</span>), history<span class="op">=</span><span class="va">None</span>)</span></code></pre></div>
-<p>FEV treats fitted parameters and past innovations as known; finite-sample state uncertainty or missing observations can cause differences from Statsmodels’ state-space variances. Parameter-estimation uncertainty is not included. Concentrated-scale fits use <code>result.scale</code>; other fits use the <code>sigma2</code> parameter. Models needing future external regressors are outside the current forecasting interface. No transformations or evaluation procedures are added by these functions.</p>
+<p>FEV treats fitted parameters and past innovations as known; finite-sample state uncertainty or missing observations can cause differences from Statsmodels’ state-space variances. Parameter-estimation uncertainty is not included. Concentrated-scale fits use <code>result.scale</code>; other fits use the <code>sigma2</code> parameter. Models with external regressors require future values through keyword-only <code>exog=</code>. No transformations or evaluation procedures are added by these functions.</p>
+<h2 id="manual-intervention-modelling">Manual intervention modelling</h2>
+<p>Interventions describe specified events; no dates or decay rates are detected or estimated automatically. <code>at.outlier_regressors(y, dates=None, types=&quot;AO&quot;, delta=0.7, *, positions=None)</code> returns a named pandas DataFrame ready for Statsmodels <code>ARIMA(..., exog=X).fit()</code>.</p>
+<p>For a chosen observation T0:</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Regressor</th>
+<th>Coefficient interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>AO</td>
+<td>One at T0, zero elsewhere</td>
+<td>One-observation displacement</td>
+</tr>
+<tr class="even">
+<td>LS</td>
+<td>Zero before T0, one from T0 onward</td>
+<td>Sustained level displacement</td>
+</tr>
+<tr class="odd">
+<td>TC</td>
+<td>Zero before T0, delta**(t-T0) afterward</td>
+<td>Initial displacement, decaying by delta per observation</td>
+</tr>
+</tbody>
+</table>
+<p>The default TC decay is 0.7, following ARIMA-Tools-R; require 0 &lt; delta &lt; 1. One scalar decay applies to all TC events. Multiple interventions and repeated types are allowed; duplicate type/date pairs are rejected. Different types on the same date are allowed, but can be unidentified in short samples.</p>
+<h3 id="complete-statsmodels-example">Complete Statsmodels example</h3>
+<p>The following simulated example specifies a permanent shift, a one-quarter outlier, and a temporary change. In empirical work, choose dates from the substantive question and inspect the fitted diagnostics.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima.model <span class="im">import</span> ARIMA</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> arima_tools <span class="im">as</span> at</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>index <span class="op">=</span> pd.period_range(<span class="st">&quot;2000Q1&quot;</span>, periods<span class="op">=</span><span class="dv">104</span>, freq<span class="op">=</span><span class="st">&quot;Q&quot;</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> at.outlier_regressors(</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    index, dates<span class="op">=</span>[<span class="st">&quot;2008Q4&quot;</span>, <span class="st">&quot;2020Q2&quot;</span>, <span class="st">&quot;2021Q1&quot;</span>],</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    types<span class="op">=</span>[<span class="st">&quot;LS&quot;</span>, <span class="st">&quot;AO&quot;</span>, <span class="st">&quot;TC&quot;</span>], delta<span class="op">=</span><span class="fl">0.7</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1234</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> pd.Series(</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="dv">100</span> <span class="op">+</span> <span class="fl">0.2</span> <span class="op">*</span> np.arange(<span class="bu">len</span>(index))</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> X.to_numpy() <span class="op">@</span> np.array([<span class="fl">5.0</span>, <span class="op">-</span><span class="fl">8.0</span>, <span class="fl">3.0</span>])</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">+</span> rng.normal(size<span class="op">=</span><span class="bu">len</span>(index)),</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>index, name<span class="op">=</span><span class="st">&quot;Output&quot;</span>,</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> ARIMA(y, order<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>), trend<span class="op">=</span><span class="st">&quot;ct&quot;</span>, exog<span class="op">=</span>X).fit(</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    cov_type<span class="op">=</span><span class="st">&quot;oim&quot;</span>, method_kwargs<span class="op">=</span>{<span class="st">&quot;maxiter&quot;</span>: <span class="dv">500</span>},</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Converged:&quot;</span>, results.mle_retvals[<span class="st">&quot;converged&quot;</span>])</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(at.coefficient_diagnostics(results))</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>effects <span class="op">=</span> at.intervention_effects(results, X)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>figure <span class="op">=</span> at.plot_interventions(y, X, results<span class="op">=</span>results, individual<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>future_X <span class="op">=</span> at.extend_interventions(X, steps<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> at.dynamic_forecast(results, steps<span class="op">=</span><span class="dv">8</span>, exog<span class="op">=</span>future_X)</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>fan <span class="op">=</span> at.plot_fan_chart(results, steps<span class="op">=</span><span class="dv">8</span>, exog<span class="op">=</span>future_X)</span></code></pre></div>
+<p>The example explicitly requests observed-information covariance (`cov_type=“oim”) and allows more optimizer iterations. Inspect convergence and standard errors: sparse, single-observation AO regressors can give unstable default OPG covariance estimates. An AO coefficient is supported by very limited event information; normal/Wald inference remains approximate and should not determine event inclusion automatically. The package does not change Statsmodels fitting defaults.</p>
+<h3 id="dates-positions-and-metadata">Dates, positions and metadata</h3>
+<p>Pass a Series, pandas Index, or one-dimensional array. Exactly one of <code>dates</code> or <code>positions</code> is required. Positions are <strong>zero-based</strong>; arrays receive a RangeIndex. Period dates resolve to their containing period using the index frequency. Datetime events require exact, complete dates with matching timezone. Calendar indexes must be regular, unique and increasing, without missing labels. Numerical indexes must be unique and increasing. No observation is sorted or dropped; missing response values retain their positions. TC decay advances one observation at a time, rather than by calendar-day distance.</p>
+<p>Generated columns include names such as <code>AO_2020Q2</code>, <code>LS_2008-09</code>, and <code>TC_pos12</code>. <code>X.attrs[&quot;arima_tools_interventions&quot;]</code> is a version-1 dictionary with:</p>
+<ul>
+<li><code>origin_length</code>, <code>origin_index</code>: original sample length and index description.</li>
+<li><code>row_start</code>, <code>index</code>: current block’s offset and index description.</li>
+<li><code>events</code>: type, zero-based position, label, column, and delta (None for AO/LS).</li>
+</ul>
+<p>Descriptions contain index kind, dtype, frequency, timezone and ordered labels. <code>extend_interventions</code> preserves the original event specifications while updating the current block. Keep the original X: pandas transformations may discard attrs. Effects, plotting and extension validate metadata against the numerical columns; interventions are never inferred from prefixes alone. Ordinary controls can be combined with X for fitting; pass the original intervention-only X to the effects and plotting functions.</p>
+<h3 id="effects-adjustment-and-identification">Effects, adjustment and identification</h3>
+<p><code>at.intervention_effects(results, X)</code> returns an indexed DataFrame: <code>Observed</code>, one named contribution per intervention, <code>Combined</code>, and <code>Adjusted</code>. Each contribution is beta_hat*X; Combined sums only those intervention contributions. Adjusted is Observed minus Combined. Ordinary controls, deterministic terms and ARIMA errors are not removed. <strong>The intervention-adjusted series is not a residual.</strong> Plotting delegates to this same numerical helper.</p>
+<p><code>at.plot_interventions(y, X, *, results=None, individual=False, title=&quot;Intervention Effects&quot;)</code> returns a Plotly Figure. Without results it shows observations and chosen dates. With results, the upper panel shows observed and adjusted series; the lower panel shows the combined effect. <code>individual=True</code> adds component curves. Same-date events share one marker and tooltip.</p>
+<p>All effects stay on the modeled response scale. If y is log GDP, adjustment remains in logarithms. Statsmodels estimates a regression with ARIMA errors: pass the <strong>undifferenced regression columns</strong> even when d &gt; 0. An LS remains a step in the supplied response; its first difference is a pulse. An AO’s first difference has adjacent positive and negative pulses. TC remains geometric on the supplied scale. ARIMA integration does not turn these regressors into innovation impulse responses. There is no automatic back-transformation.</p>
+<p>Deterministic and stochastic permanence are different. In <span class="math inline"><em>y</em><sub><em>t</em></sub> = <em>ω</em><em>L</em><em>S</em><sub><em>t</em></sub> + <em>u</em><sub><em>t</em></sub></span>, with <span class="math inline"><em>u</em><sub><em>t</em></sub> = <em>u</em><sub><em>t</em> − 1</sub> + <em>ε</em><sub><em>t</em></sub></span>, the specified LS contributes a permanent deterministic shift of magnitude <span class="math inline"><em>ω</em></span>. An innovation <span class="math inline"><em>ε</em><sub><em>t</em></sub></span> also has a permanent effect on the stochastic component <span class="math inline"><em>u</em><sub><em>t</em></sub></span>. A lasting movement in the observed series alone therefore does not establish that it is deterministic or caused by the specified event. The estimated LS coefficient describes the shift conditional on the chosen event, controls and ARIMA error model.</p>
+<p><code>order_search(..., exog=None)</code> and <code>recursive_estimation(..., exog=None)</code> accept keyword-only finite aligned regressors. DataFrame indexes must match Series y exactly; arrays align by position, with indexed exog supplying labels when y is an array. All external columns and built-in trends enter identification checks, but the original columns are passed to Statsmodels. Complete response samples retain the differenced-design check. With missing responses, the check preserves the original time grid and tests observed regressors modulo the visible integration directions: constants for I(1), affine paths for I(2). Thus a contrast across a gap can identify an LS even when its event-date response is missing. Rank uses column scaling and machine-precision SVD tolerance, not a discretionary near-collinearity cutoff. This algebraic check does not guarantee precise estimates.</p>
+<p>An LS at the first observation can duplicate a constant or disappear under differencing. Events at the last observation can generate identical columns. The builder warns about dependent event columns; fitting helpers report failed or unidentified specifications without removing regressors. Recursive windows before an event is observed retain missing estimates and an explanatory status. Parameter counts include external coefficients. Stage 2 convergence, effective sample, initialization and differencing safeguards remain in force. Comparison reports <code>Identified</code> and <code>Identification Status</code>; selection requires identification to be established (<code>Identified=True</code>). Different exogenous specifications remain comparable when their response sample and likelihood conventions are compatible; X equality is not required.</p>
+<p>For response gaps, the observed-data check recognizes the standard Statsmodels state-space representation with proper stationary ARMA states and integration-only exact-diffuse initialization (no burn-in), or approximate-diffuse initialization with its standard integration-order burn-in. Unsupported initialization, additional diffuse states or custom burn-in produce <strong>identification not established</strong>, rather than a mathematical rejection. Exact dependencies among observed regression columns remain unidentified. Under exact diffuse initialization, confounding with the integration directions is also unidentified. Under finite approximate-diffuse initialization, deficient diffuse-limit contrasts are inconclusive: the finite initial-state prior can supply additional likelihood information. Successful optimization alone does not resolve this uncertainty.</p>
+<p>Search may estimate an inconclusive specification, retaining <code>Identified=None</code>, an explanatory status and a warning; automatic selection excludes it. Effects from an inconclusive supplied fit carry a warning and remain conditional on its coefficients. Neither helper removes columns or responses. Recursive estimation retains its existing requirement for a complete finite response sample; its complete-data rank check continues to report collinear post-event windows until the full design becomes identifiable.</p>
+<h3 id="dynamic-forecasting-with-interventions">Dynamic forecasting with interventions</h3>
+<p><code>at.extend_interventions(X, steps=20, *, future_index=None)</code> returns <strong>future rows only</strong>. AO stays zero, LS stays one, and TC decay continues from the original event, without restarting at the forecast origin. It continues existing events; it does not introduce new future events. Regular period, datetime, RangeIndex and equally spaced numerical indexes can continue automatically; otherwise supply an increasing future index. Explicit continuations must match known frequencies.</p>
+<p><code>dynamic_forecast</code>, <code>plot_forecast</code> and <code>plot_fan_chart</code> accept keyword-only <code>exog=None</code> for all future external regressors. DataFrame columns must have the fitted names in the fitted order and match the model’s forecast index; unnamed arrays must have the correct shape and are interpreted in fitted column order. Supply ordinary controls too, when present; built-in trends need no supplied columns. Forecast-error variances are unchanged and condition on the parameters and future regressors. No coefficient, date, decay or model-selection uncertainty is added. Existing missing-history/initialization limitations of innovation-based FEV still apply. Static forecasting and forecast evaluation remain the responsibility of Forecasting-Tools.</p>
 <h2 id="compact-api-summary">Compact API summary</h2>
 <p>Exact public signatures and principal returns are listed below. <code>results</code> and <code>result</code> are the parameter names actually used by the API; both denote a fitted Statsmodels result unless otherwise specified above. Plot size/title arguments can customize the older diagnostic figures; forecast figures use their built-in layout and can be edited through the returned Plotly object.</p>
 <table class="caption-top">
@@ -287,7 +374,7 @@ table { font-size: 0.88rem; }
 <td style="text-align: left;">Series: selected table row</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>at.order_search(y, p_max=4, q_max=4, d_min=0, d_max=0, criterion=&#39;BIC&#39;, trend=None)</code></td>
+<td style="text-align: left;"><code>at.order_search(y, p_max=4, q_max=4, d_min=0, d_max=0, criterion=&#39;BIC&#39;, trend=None, *, exog=None)</code></td>
 <td style="text-align: left;">DataFrame: candidate orders and fit status</td>
 </tr>
 <tr class="odd">
@@ -295,7 +382,7 @@ table { font-size: 0.88rem; }
 <td style="text-align: left;">Fitted StatsForecast AutoARIMA object</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>at.recursive_estimation(y, order, initial=None, min_df=20, confidence=0.95, trend=None)</code></td>
+<td style="text-align: left;"><code>at.recursive_estimation(y, order, initial=None, min_df=20, confidence=0.95, trend=None, *, exog=None)</code></td>
 <td style="text-align: left;">DataFrame: recursive estimates and fit status</td>
 </tr>
 <tr class="odd">
@@ -311,16 +398,32 @@ table { font-size: 0.88rem; }
 <td style="text-align: left;">ndarray: forecast-error variances</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>at.dynamic_forecast(result, steps=20, level=0.95)</code></td>
+<td style="text-align: left;"><code>at.dynamic_forecast(result, steps=20, level=0.95, *, exog=None)</code></td>
 <td style="text-align: left;">DataFrame: Forecast, FEV, SE, Lower, Upper</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><code>at.plot_forecast(result, steps=20, level=0.95, history=50)</code></td>
+<td style="text-align: left;"><code>at.plot_forecast(result, steps=20, level=0.95, history=50, *, exog=None)</code></td>
 <td style="text-align: left;">Figure: forecast and unfilled interval lines</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>at.plot_fan_chart(result, steps=20, levels=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99), history=50)</code></td>
+<td style="text-align: left;"><code>at.plot_fan_chart(result, steps=20, levels=(0.5, 0.7, 0.8, 0.9, 0.95, 0.99), history=50, *, exog=None)</code></td>
 <td style="text-align: left;">Figure: forecast and nested shaded intervals</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>at.outlier_regressors(y, dates=None, types=&quot;AO&quot;, delta=0.7, *, positions=None)</code></td>
+<td style="text-align: left;">DataFrame: manual event regressors and metadata</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>at.intervention_effects(results, X)</code></td>
+<td style="text-align: left;">DataFrame: observations, contributions, combined effect, adjustment</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>at.plot_interventions(y, X, *, results=None, individual=False, title=&quot;Intervention Effects&quot;)</code></td>
+<td style="text-align: left;">Figure: events, fitted contributions and adjustment</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>at.extend_interventions(X, steps=20, *, future_index=None)</code></td>
+<td style="text-align: left;">DataFrame: future regressor rows</td>
 </tr>
 </tbody>
 </table>
@@ -340,9 +443,9 @@ Email: <a href="mailto:maarranz@eco.uc3m.es">maarranz@eco.uc3m.es</a><br>
 ORCID: <a href="https://orcid.org/0000-0002-5951-2284">0000-0002-5951-2284</a></p>
 <h3 id="rebuilding-the-html">Rebuilding the HTML</h3>
 <p>The examples are ordinary Python code blocks, validated in a fresh session rather than executed during rendering. With Quarto installed, the portable standalone build used for this page is:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> pandoc docs/ARIMA_Tools_Documentation.qmd <span class="dt">\</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from</span> markdown <span class="at">--to</span> html5 <span class="at">--standalone</span> <span class="at">--toc</span> <span class="at">--toc-depth</span><span class="op">=</span>2 <span class="dt">\</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--embed-resources</span> <span class="at">-o</span> docs/index.html</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> pandoc docs/ARIMA_Tools_Documentation.qmd <span class="dt">\</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from</span> markdown <span class="at">--to</span> html5 <span class="at">--standalone</span> <span class="at">--toc</span> <span class="at">--toc-depth</span><span class="op">=</span>2 <span class="dt">\</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--embed-resources</span> <span class="at">-o</span> docs/index.html</span></code></pre></div>
 
 
 

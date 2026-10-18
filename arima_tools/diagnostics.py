@@ -10,6 +10,7 @@ from statsmodels.tsa.arima.model import ARIMA
 from plotly.subplots import make_subplots
 from scipy.stats import norm, jarque_bera, skew, kurtosis
 from .model_selection import _convergence_info
+from ._regressors import validate_exog, identification
 
 def _residual_sample(results, consecutive=True):
     """Exclude initialization and unobserved responses without closing gaps."""
@@ -907,6 +908,8 @@ def recursive_estimation(
     min_df=20,
     confidence=0.95,
     trend=None,
+    *,
+    exog=None,
 ):
     """
     Perform recursive expanding-window estimation of an ARIMA model.
@@ -937,6 +940,9 @@ def recursive_estimation(
         Confidence level for the parameter confidence intervals.
     trend : str or None, default None
         Trend specification passed to statsmodels ARIMA.
+    exog : array-like or DataFrame, optional, keyword-only
+        Aligned finite regressors, sliced with y. Unidentified windows remain
+        in the table with missing estimates and an explanatory failure status.
 
     Returns
     -------
@@ -1000,6 +1006,12 @@ def recursive_estimation(
             "y must contain only finite observations."
         )
 
+    exog = validate_exog(y_series if isinstance(y, pd.Series) else y, exog)
+    if exog is not None and not isinstance(y, pd.Series):
+        # As in Statsmodels, indexed exog supplies labels for array responses.
+        if not exog.index.is_unique or not exog.index.is_monotonic_increasing:
+            raise ValueError("exog index must be unique and increasing.")
+        y_series.index = exog.index
     n = len(y_series)
 
     # ------------------------------------------------------------
@@ -1025,7 +1037,7 @@ def recursive_estimation(
     # deterministic term    : depends on trend
     # ------------------------------------------------------------
 
-    k = ARIMA(y_series, order=tuple(order), trend=trend).k_params
+    k = ARIMA(y_series, order=tuple(order), trend=trend, exog=exog).k_params
 
     # Differencing reduces the effective information available
     # in the initial sample.
@@ -1116,7 +1128,13 @@ def recursive_estimation(
                     sample,
                     order=tuple(order),
                     trend=trend,
+                    exog=None if exog is None else exog.iloc[:end],
                 )
+                identified, identification_status = identification(model)
+                if identified is False:
+                    raise ValueError(identification_status)
+                if identified is None:
+                    warnings.warn(identification_status, UserWarning)
 
                 result = model.fit()
 
@@ -1152,7 +1170,8 @@ def recursive_estimation(
                         ),
                         "Warnings": tuple(str(w.message) for w in caught),
                         "Converged": converged,
-                        "Status": "OK" if converged else convergence_status,
+                        "Status": ("OK" if identified is True else identification_status)
+                        if converged else convergence_status,
                     }
                 )
 

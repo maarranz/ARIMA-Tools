@@ -29,6 +29,10 @@ from statsforecast.arima import arima_string
 __version__ = "0.2.0"
 
 __all__ = [
+    "outlier_regressors",
+    "intervention_effects",
+    "plot_interventions",
+    "extend_interventions",
     "root_diagnostics",
     "is_causal",
     "is_invertible",
@@ -93,4 +97,8 @@ from .forecasting import (
     dynamic_forecast,
     plot_forecast,
     plot_fan_chart,
+)
+
+from .interventions import (
+    outlier_regressors, intervention_effects, plot_interventions, extend_interventions,
 )

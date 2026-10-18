@@ -10,6 +10,7 @@ import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 from statsforecast.models import AutoARIMA
 from statsforecast.arima import arima_string
+from ._regressors import validate_exog, identification
 
 def _initialization_info(result):
     """Describe fitted initialization without comparing stationary state sizes.
@@ -253,9 +254,12 @@ def compare_models(*results, names=None):
         order = tuple(result.model.order)
         label = f"ARIMA{order}" if names is None else names[i]
         converged, convergence_status = _convergence_info(result)
+        identified, identification_status = identification(result.model, getattr(result, "fixed_params", ()))
         rows.append({"Model": label, "Order": order, "d": order[1],
                      **_ic_values(result), **_sample_info(result),
                      **_initialization_info(result),
+                     "Identified": identified,
+                     "Identification Status": identification_status,
                      "Converged": converged,
                      "Convergence Status": convergence_status})
 
@@ -275,6 +279,8 @@ def order_search(
     d_max=0,
     criterion="BIC",
     trend=None,
+    *,
+    exog=None,
 ):
     """
     Search over a grid of nonseasonal ARIMA(p,d,q) models using
@@ -305,6 +311,10 @@ def order_search(
 
     trend : str or None, default None
         Trend specification passed to statsmodels ARIMA.
+    exog : array-like or DataFrame, optional, keyword-only
+        Finite aligned regressors. No rows are sorted, aligned or dropped.
+        Regression rank includes trends and uses observed-data integration
+        contrasts when the response contains gaps; inconclusive checks are reported.
 
     Returns
     -------
@@ -381,6 +391,7 @@ def order_search(
     # Estimate candidate models
     # ------------------------------------------------------------
 
+    exog = validate_exog(y, exog)
     rows = []
 
     for d in range(d_min, d_max + 1):
@@ -392,6 +403,8 @@ def order_search(
                 order = (p, d, q)
 
                 caught = []
+                identified = None
+                identification_status = "Identification not established: model construction failed."
                 try:
                     # Suppress repetitive statsmodels warnings only
                     # during estimation of this candidate model.
@@ -402,7 +415,13 @@ def order_search(
                             y,
                             order=order,
                             trend=trend,
+                            exog=exog,
                         )
+                        identified, identification_status = identification(model)
+                        if identified is False:
+                            raise ValueError(identification_status)
+                        if identified is None:
+                            warnings.warn(identification_status, UserWarning)
 
                         result = model.fit()
 
@@ -415,6 +434,8 @@ def order_search(
 
                     rows.append(
                         {
+                            "Identified": identified,
+                            "Identification Status": identification_status,
                             "Order": order,
                             "p": p,
                             "d": d,
@@ -426,7 +447,7 @@ def order_search(
                             "Warnings": tuple(str(w.message) for w in caught),
                             "Converged": converged,
                             "Status": (
-                                "OK"
+                                ("OK" if identified is True else identification_status)
                                 if converged
                                 else convergence_status
                             ),
@@ -449,6 +470,8 @@ def order_search(
                             "BIC": np.nan,
                             "HQIC": np.nan,
                             "Warnings": tuple(str(w.message) for w in caught),
+                            "Identified": identified,
+                            "Identification Status": identification_status,
                             "Converged": False,
                             "Convergence Status": "Fit failed",
                             "Status": (
@@ -556,6 +579,8 @@ def select_model(table, criterion="BIC", d=None):
             confirmed |= eligible["Convergence Status"].eq(
                 "Not applicable (non-optimizer estimator)")
         eligible = eligible.loc[confirmed]
+    if "Identified" in eligible:
+        eligible = eligible.loc[eligible["Identified"].eq(True).fillna(False)]
     eligible = eligible.loc[np.isfinite(eligible[column])]
     if eligible.empty:
         raise ValueError(f"No eligible models with finite {column} values are available.")

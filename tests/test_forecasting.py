@@ -117,7 +117,7 @@ class ForecastingTests(unittest.TestCase):
             at.forecast_error_variance(object())
         self.assertEqual(at.forecast_error_variance(result, np.int64(1)).shape, (1,))
         self.assertEqual(at.dynamic_forecast(result, np.int64(1), np.float64(.95)).shape, (1, 5))
-        self.assertEqual(len(at.__all__), 26)
+        self.assertEqual(len(at.__all__), 30)
 
     def test_plot_values_and_band_nesting(self):
         for name, result in self.models.items():

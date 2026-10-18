@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from scipy.stats import norm
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.arima_process import arma2ma
+from ._regressors import future_exog
 
 
 def forecast_error_variance(result, steps=20):
@@ -78,20 +79,24 @@ def forecast_error_variance(result, steps=20):
     return sigma2 * np.cumsum(np.square(psi))
 
 
-def dynamic_forecast(result, steps=20, level=0.95):
+def dynamic_forecast(result, steps=20, level=0.95, *, exog=None):
     """
     Produce recursive forecasts from the end of the observed sample.
 
     Parameters
     ----------
     result : statsmodels ARIMAResults
-        Fitted Statsmodels ARIMA result. Models requiring future external
-        regressors cannot be forecast through this interface; deterministic
-        trends handled by Statsmodels are supported.
+        Fitted Statsmodels ARIMA result. Supply future exog for every external
+        regressor. Built-in trends are handled by Statsmodels.
     steps : int, default 20
         Positive number of forecast horizons.
     level : float, default 0.95
         Normal-theory prediction-interval coverage, strictly between 0 and 1.
+
+    exog : array-like or DataFrame, optional, keyword-only
+        Future values for all external regressors, in fitted column order.
+        DataFrame names and forecast indexes must match the model. Forecasts
+        condition on these values; coefficient/date/decay uncertainty is excluded.
 
     Returns
     -------
@@ -116,7 +121,9 @@ def dynamic_forecast(result, steps=20, level=0.95):
         raise ValueError("level must lie strictly between 0 and 1.")
 
     fev = forecast_error_variance(result, steps=steps)
-    forecasts = np.asarray(result.forecast(steps=int(steps)), dtype=float)
+    future = future_exog(result, exog, int(steps))
+    kwargs = {} if future is None else {"exog": future}
+    forecasts = np.asarray(result.forecast(steps=int(steps), **kwargs), dtype=float)
     se = np.sqrt(fev)
     critical = norm.isf((1.0 - level) / 2.0)
 
@@ -199,7 +206,7 @@ def _forecast_figure(result, x, observed, axis_title, title):
     return fig
 
 
-def plot_forecast(result, steps=20, level=0.95, history=50):
+def plot_forecast(result, steps=20, level=0.95, history=50, *, exog=None):
     """
     Plot observed values, recursive forecasts, and prediction-interval lines.
 
@@ -214,6 +221,8 @@ def plot_forecast(result, steps=20, level=0.95, history=50):
     history : int or None, default 50
         Positive number of final observed values to display, or None for all
         observations. Values larger than the sample display the whole sample.
+    exog : array-like or DataFrame, optional, keyword-only
+        Future external regressors, validated by dynamic_forecast().
 
     Returns
     -------
@@ -237,7 +246,8 @@ def plot_forecast(result, steps=20, level=0.95, history=50):
         or not isinstance(history, (int, np.integer)) or history <= 0
     ):
         raise ValueError("history must be a positive integer or None.")
-    forecast = dynamic_forecast(result, steps=steps, level=level)
+    kwargs = {} if exog is None else {"exog": exog}
+    forecast = dynamic_forecast(result, steps=steps, level=level, **kwargs)
     x, observed, future, axis_title = _forecast_plot_data(result, int(steps), history)
     fig = _forecast_figure(result, x, observed, axis_title, "Dynamic Forecast")
     for bound in ("Lower", "Upper"):
@@ -263,6 +273,8 @@ def plot_fan_chart(
     steps=20,
     levels=(0.50, 0.70, 0.80, 0.90, 0.95, 0.99),
     history=50,
+    *,
+    exog=None,
 ):
     """
     Plot recursive forecasts with nested central prediction-interval bands.
@@ -278,6 +290,8 @@ def plot_fan_chart(
         zero and one. Input order does not affect the chart.
     history : int or None, default 50
         Positive number of final observed values to display, or None for all.
+    exog : array-like or DataFrame, optional, keyword-only
+        Future external regressors, validated by dynamic_forecast().
 
     Returns
     -------
@@ -313,7 +327,8 @@ def plot_fan_chart(
         raise ValueError("history must be a positive integer or None.")
 
     levels = sorted(levels, reverse=True)
-    tables = [dynamic_forecast(result, steps=steps, level=level) for level in levels]
+    kwargs = {} if exog is None else {"exog": exog}
+    tables = [dynamic_forecast(result, steps=steps, level=level, **kwargs) for level in levels]
     x, observed, future, axis_title = _forecast_plot_data(result, int(steps), history)
     coverages = ", ".join(f"{100 * level:g}%" for level in reversed(levels))
     fig = _forecast_figure(
