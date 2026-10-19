@@ -39,8 +39,8 @@ import arima_tools as at
 Python 3.12 or newer is required; installation was checked on Python 3.12, 3.13
 and 3.14. Pip installs the required runtime dependencies automatically. No cloning,
 directory changes or separate StatsForecast installation are needed for this
-workflow. The `v1.0.1` tag will be published after release validation; until
-then, replace `v1.0.1` with the packaging commit SHA.
+workflow. Installation from the published `v1.0.1` tag has been verified in
+a clean Python environment.
 
 ## Repository files and development environment
 

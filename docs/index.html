@@ -123,9 +123,8 @@ and import</h2>
 <p>For Google Colab, the target installation command is:</p>
 <pre class="ipython"><code>%pip -q install &quot;ARIMA-Tools @ git+https://github.com/maarranz/ARIMA-Tools.git@v1.0.1&quot;</code></pre>
 <p>Then use <code>import arima_tools as at</code>; pip supplies the
-runtime dependencies. The <code>v1.0.1</code> tag will be published after
-release validation; until then, replace <code>v1.0.1</code> with the packaging
-commit SHA.</p>
+runtime dependencies. Installation from the published <code>v1.0.1</code> tag has been verified
+in a clean Python environment.</p>
 <p>For repository files and development, clone the repository and
 recreate the mamba environment only if needed, from its root:</p>
 <pre class="bash"><code>mamba env create -f environment.yml
@@ -491,9 +490,11 @@ ORCID: <a href="https://orcid.org/0000-0002-5951-2284">0000-0002-5951-2284</a></
 <p>The examples were checked in an existing environment with Python 3.14.7, Statsmodels 0.15.0 and StatsForecast 2.1.1. The standalone HTML build was checked with Quarto 1.10.19. These are tested versions, not additional dependency pins.</p>
 <p>The earlier source-checkout workflow passed clean-environment and
 hosted Colab checks for estimation, diagnostics, dynamic forecasting and
-Plotly display. Those results do not establish installation from the new
-GitHub pip reference. Version 1.0.1 adds setuptools packaging; the tag is
-reserved for final release approval. See the <a href="../README.md#installation-in-google-colab">README installation
+Plotly display. Version 1.0.1 adds setuptools packaging. Installation from the published
+<code>v1.0.1</code> tag was verified separately in a clean Python environment.
+Hosted Colab installation, imports and numerical checks also passed using
+the same commit; Plotly display for that installation remains unverified
+because of a Colab JavaScript-loading restriction. See the <a href="../README.md#installation-in-google-colab">README installation
 section</a> for the target student commands and release status.
 Dependency versions may change in future runtimes.</p>
 <h3 id="rebuilding-the-html">Rebuilding the HTML</h3>

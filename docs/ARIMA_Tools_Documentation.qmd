@@ -57,8 +57,8 @@ For Google Colab, the target installation command is:
 ```
 
 Then use `import arima_tools as at`; pip supplies the runtime dependencies.
-The `v1.0.1` tag will be published after release validation; until then,
-replace `v1.0.1` with the packaging commit SHA.
+Installation from the published `v1.0.1` tag has been verified in a clean
+Python environment.
 
 For repository files and development, clone the repository and recreate the
 mamba environment only if needed, from its root:
@@ -652,9 +652,11 @@ with Quarto 1.10.19. These are tested versions, not additional dependency pins.
 
 The earlier source-checkout workflow passed clean-environment and hosted Colab
 checks for estimation, diagnostics, dynamic forecasting and Plotly display.
-Those results do not establish installation from the new GitHub pip reference.
-Version 1.0.1 adds setuptools packaging; the tag is reserved for final
-release approval. See the [README installation section](../README.md#installation-in-google-colab)
+Version 1.0.1 adds setuptools packaging. Installation from the published
+`v1.0.1` tag was verified separately in a clean Python environment. Hosted
+Colab installation, imports and numerical checks also passed using the same
+commit; Plotly display for that installation remains unverified because of
+a Colab JavaScript-loading restriction. See the [README installation section](../README.md#installation-in-google-colab)
 for the target student commands and release status. Dependency versions may
 change in future runtimes.
 
