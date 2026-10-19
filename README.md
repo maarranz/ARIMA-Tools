@@ -22,9 +22,30 @@ Use the flat API, `import arima_tools as at`, for 30 public functions covering:
 Intervention dates and decay rates are specified by the user. The package does
 not detect events automatically or establish their economic causality.
 
-## GitHub setup
+## Installation in Google Colab
 
-Clone the repository and create its environment if needed:
+Run this in a Colab code cell:
+
+```ipython
+%pip -q install "ARIMA-Tools @ git+https://github.com/maarranz/ARIMA-Tools.git@v1.0.1"
+```
+
+Then import the package:
+
+```python
+import arima_tools as at
+```
+
+Python 3.12 or newer is required; installation was checked on Python 3.12, 3.13
+and 3.14. Pip installs the required runtime dependencies automatically. No cloning,
+directory changes or separate StatsForecast installation are needed for this
+workflow. The `v1.0.1` tag will be published after release validation; until
+then, replace `v1.0.1` with the packaging commit SHA.
+
+## Repository files and development environment
+
+To obtain the development notebook, documentation or source files, clone the
+repository. The existing mamba environment remains available for this workflow:
 
 ```bash
 git clone https://github.com/maarranz/ARIMA-Tools.git
@@ -33,40 +54,11 @@ mamba env create -f environment.yml
 mamba activate atse_arma_tools
 ```
 
-For an existing checkout/environment, change to the repository root and activate
-`atse_arma_tools`. [environment.yml](environment.yml) specifies Python 3.14 and the
-scientific Python, Statsmodels, StatsForecast, Plotly and Jupyter dependencies.
-Run Python or Jupyter from this root so the local `arima_tools` directory is
-importable; no package-install or PyPI step is required.
-
-The GitHub checkout and a fresh environment created from this file were validated.
-The dependency file is not a version lock; future dependency updates may require
-compatibility checks.
-
-## Google Colab
-
-Open a notebook in [Google Colab](https://colab.research.google.com/) and run this
-setup cell, taken from the successful hosted validation notebook:
-
-```python
-import sys, subprocess, importlib.util
-from pathlib import Path
-
-checkout = Path('/content/arima_stage4c')
-if not checkout.exists():
-    subprocess.run(['git', 'clone', 'https://github.com/maarranz/ARIMA-Tools.git', str(checkout)], check=True)
-if importlib.util.find_spec('statsforecast') is None:
-    subprocess.run([sys.executable, '-m', 'pip', 'install', 'statsforecast'], check=True)
-%cd /content/arima_stage4c
-import arima_tools as at
-```
-
-Then run your notebook cells, including the short example below. Colab supplies
-the other scientific dependencies used in the tested runtime; only `statsforecast`
-is installed above if missing. No mamba environment or package-install step for
-ARIMA-Tools itself is needed in Colab. Estimation, diagnostics, dynamic forecasts
-and Plotly display passed the hosted check, which printed
-`COLAB ESTIMATION, DIAGNOSTICS AND FORECAST CHECKS PASSED`.
+Create the environment only if needed; otherwise activate the existing one.
+[environment.yml](environment.yml) specifies Python 3.14 and includes scientific,
+notebook and test tools. Run Python or Jupyter from the repository root when
+working directly with the source. Pip installation does not require mamba or a
+PyPI release. The dependency file is not a version lock.
 
 ## Short example
 

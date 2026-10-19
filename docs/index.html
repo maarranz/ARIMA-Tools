@@ -118,16 +118,29 @@ table { font-size: 0.88rem; }
 <p>ARIMA-Tools was developed for the <strong>Applied Time Series Econometrics (ATSE)</strong> course at <strong>Universidad Carlos III de Madrid</strong>. It complements Statsmodels and StatsForecast with teaching-oriented tables, summaries, numerical forecasts, and interactive Plotly figures.</p>
 <p>This document describes the software/API. The ATSE course material provides the econometric theory; the Labs provide fuller worked examples and exercises. The package currently exposes <strong>30 public functions</strong> through a deliberately flat API: use <code>import arima_tools as at</code> and call <code>at.function(...)</code>. Internal modules organize the implementation; users do not need submodule imports.</p>
 <p>Diagnostics have three layers: parameters and model structure, residual behavior, and model behavior (dynamics and parameter stability). These concepts overlap the implementation modules.</p>
-<h2 id="installation-environment-and-import">Installation, environment, and import</h2>
-<p>From the repository root, recreate the environment only if needed:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> env create <span class="at">-f</span> environment.yml</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mamba</span> activate atse_arma_tools</span></code></pre></div>
-<p>If it already exists, activate it without recreating it. <a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">environment.yml</a> specifies Python 3.14 and the required packages. Run Python or JupyterLab from the repository root so the local package is importable; no package-install command is currently provided.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima.model <span class="im">import</span> ARIMA</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.tsa.arima_process <span class="im">import</span> ArmaProcess</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> arima_tools <span class="im">as</span> at</span></code></pre></div>
+<h2 id="installation-environment-and-import">Installation, environment,
+and import</h2>
+<p>For Google Colab, the target installation command is:</p>
+<pre class="ipython"><code>%pip -q install &quot;ARIMA-Tools @ git+https://github.com/maarranz/ARIMA-Tools.git@v1.0.1&quot;</code></pre>
+<p>Then use <code>import arima_tools as at</code>; pip supplies the
+runtime dependencies. The <code>v1.0.1</code> tag will be published after
+release validation; until then, replace <code>v1.0.1</code> with the packaging
+commit SHA.</p>
+<p>For repository files and development, clone the repository and
+recreate the mamba environment only if needed, from its root:</p>
+<pre class="bash"><code>mamba env create -f environment.yml
+mamba activate atse_arma_tools</code></pre>
+<p><a href="https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml">environment.yml</a>
+specifies Python 3.14 and the full notebook/test environment. Activate
+an existing environment without recreating it. Source-tree imports
+require running from the repository root; an installed package can be
+imported from other directories. The following imports apply to either
+workflow:</p>
+<pre class="python"><code>import numpy as np
+import pandas as pd
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.arima_process import ArmaProcess
+import arima_tools as at</code></pre>
 <h3 id="small-example-used-below">Small example used below</h3>
 <p>The explicit data-generating process is a zero-mean ARMA(1,1): <code>y[t] = 0.7*y[t-1] + eps[t] + 0.4*eps[t-1]</code>, with independent standard-normal innovations (variance 1). The fixed seed, 100-observation burn-in, and 240 retained observations keep the example reproducible and small. Monthly dates are illustrative labels for this simulated series.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">12345</span>)</span>
@@ -476,7 +489,13 @@ ORCID: <a href="https://orcid.org/0000-0002-5951-2284">0000-0002-5951-2284</a></
 <h3 id="tests-and-execution-scope">Tests and execution scope</h3>
 <p>From the repository root in the activated environment, run <code>python -m unittest discover -s tests -v</code>. The examples use simulated data and require no downloaded datasets. Figures are returned rather than automatically displayed; in Jupyter display the figure or call <code>.show()</code>.</p>
 <p>The examples were checked in an existing environment with Python 3.14.7, Statsmodels 0.15.0 and StatsForecast 2.1.1. The standalone HTML build was checked with Quarto 1.10.19. These are tested versions, not additional dependency pins.</p>
-<p>This workflow uses a GitHub checkout, not an installed distribution. No packaging step is required. The clean-checkout and fresh-environment checks passed, and hosted Google Colab validation confirmed estimation, diagnostics, dynamic forecasting and Plotly display. Colab uses its hosted environment rather than the local mamba environment; see the <a href="../README.md#google-colab">README Colab setup</a> for the tested commands. Dependency versions may change in future runtimes.</p>
+<p>The earlier source-checkout workflow passed clean-environment and
+hosted Colab checks for estimation, diagnostics, dynamic forecasting and
+Plotly display. Those results do not establish installation from the new
+GitHub pip reference. Version 1.0.1 adds setuptools packaging; the tag is
+reserved for final release approval. See the <a href="../README.md#installation-in-google-colab">README installation
+section</a> for the target student commands and release status.
+Dependency versions may change in future runtimes.</p>
 <h3 id="rebuilding-the-html">Rebuilding the HTML</h3>
 <p>The examples are ordinary Python code blocks: execute them separately in a fresh session; rendering does not run them. With Quarto installed separately from the Python environment, the standalone build command from the repository root is:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> pandoc docs/ARIMA_Tools_Documentation.qmd <span class="dt">\</span></span>

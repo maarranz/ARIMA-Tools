@@ -50,14 +50,29 @@ Diagnostics have three layers: parameters and model structure, residual behavior
 
 ## Installation, environment, and import
 
-From the repository root, recreate the environment only if needed:
+For Google Colab, the target installation command is:
+
+```ipython
+%pip -q install "ARIMA-Tools @ git+https://github.com/maarranz/ARIMA-Tools.git@v1.0.1"
+```
+
+Then use `import arima_tools as at`; pip supplies the runtime dependencies.
+The `v1.0.1` tag will be published after release validation; until then,
+replace `v1.0.1` with the packaging commit SHA.
+
+For repository files and development, clone the repository and recreate the
+mamba environment only if needed, from its root:
 
 ```bash
 mamba env create -f environment.yml
 mamba activate atse_arma_tools
 ```
 
-If it already exists, activate it without recreating it. [environment.yml](https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml) specifies Python 3.14 and the required packages. Run Python or JupyterLab from the repository root so the local package is importable; no package-install command is currently provided.
+[environment.yml](https://github.com/maarranz/ARIMA-Tools/blob/main/environment.yml)
+specifies Python 3.14 and the full notebook/test environment. Activate an existing
+environment without recreating it. Source-tree imports require running from the
+repository root; an installed package can be imported from other directories.
+The following imports apply to either workflow:
 
 ```python
 import numpy as np
@@ -635,12 +650,13 @@ The examples were checked in an existing environment with Python 3.14.7,
 Statsmodels 0.15.0 and StatsForecast 2.1.1. The standalone HTML build was checked
 with Quarto 1.10.19. These are tested versions, not additional dependency pins.
 
-This workflow uses a GitHub checkout, not an installed distribution. No packaging
-step is required. The clean-checkout and fresh-environment checks passed, and
-hosted Google Colab validation confirmed estimation, diagnostics, dynamic
-forecasting and Plotly display. Colab uses its hosted environment rather than the
-local mamba environment; see the [README Colab setup](../README.md#google-colab)
-for the tested commands. Dependency versions may change in future runtimes.
+The earlier source-checkout workflow passed clean-environment and hosted Colab
+checks for estimation, diagnostics, dynamic forecasting and Plotly display.
+Those results do not establish installation from the new GitHub pip reference.
+Version 1.0.1 adds setuptools packaging; the tag is reserved for final
+release approval. See the [README installation section](../README.md#installation-in-google-colab)
+for the target student commands and release status. Dependency versions may
+change in future runtimes.
 
 ### Rebuilding the HTML
 
